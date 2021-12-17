@@ -32,6 +32,7 @@ const ProductSchema = new Schema<IProductModel>(
       timestamps: true,
    }
 )
+ProductSchema.index({ name: 1 })
 
 const Products = mongoose.model<IProductModel>('Products', ProductSchema)
 

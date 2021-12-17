@@ -7,6 +7,7 @@ import Home from '../pages/Home'
 import Login from '../pages/Login'
 import NotFound from '../pages/NotFound'
 import Register from '../pages/Register'
+import Customer from '../pages/Customer'
 
 const authRoutes: IRoute[] = [
    {
@@ -47,6 +48,14 @@ const adminRoutes: IRoute[] = [
    },
 ]
 
+const customerRoutes: IRoute[] = [
+   {
+      path: '/order/:id',
+      auth: false,
+      element: <Customer />,
+   },
+]
+
 const mainRoutes: IRoute[] = [
    {
       path: '/',
@@ -64,8 +73,9 @@ const notFoundRoutes: IRoute[] = [
 ]
 const routes: IRoute[] = [
    ...authRoutes,
-   ...adminRoutes,
    ...mainRoutes,
+   ...adminRoutes,
+   ...customerRoutes,
    ...notFoundRoutes,
 ]
 

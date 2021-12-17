@@ -1,5 +1,10 @@
 import express from 'express'
-import { createProduct, getProducts } from '../controller/productController'
+import {
+   createProduct,
+   deleteProduct,
+   getProducts,
+   updateProduct,
+} from '../controller/productController'
 import { isAuth, isAdmin } from '../middleware/jwt'
 import { body } from 'express-validator'
 
@@ -36,5 +41,7 @@ const uploadMulter = multer({ storage })
 router.get('/', getProducts)
 
 router.post('/', isAuth, isAdmin, uploadMulter.single('photo'), createProduct)
+router.put('/:id', isAuth, isAdmin, uploadMulter.single('photo'), updateProduct)
+router.delete('/:id', isAuth, isAdmin, deleteProduct)
 
 export default router

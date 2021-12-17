@@ -19,61 +19,38 @@ const Create = async (values: any) => {
    }
 }
 
-// const Create = async (
-//    product: IProduct,
-//    callback: (error: string | null, product: IProduct | null) => void
-// ) => {
-//    logging.info('Creating product...')
+const Update = async (id: any, values: any) => {
+   logging.info('Updating product...')
 
-//    try {
-//       const { data } = await axios.post(
-//          `${config.server.url}/api/products`,
-//          product
-//       )
-//       logging.info('Successfuly create product.')
-//       callback(null, data.product)
-//    } catch (error) {
-//       logging.error(error)
-//       callback(`Failed create product`, null)
-//    }
-// }
+   try {
+      if (!id) throw new Error('Product tidak ditemukan')
 
-// const Login = async (
-//    values: any,
-//    callback: (error: any | null, user: IUser | null) => void
-// ) => {
-//    try {
-//       const response = await axios.post(
-//          `${config.server.url}/api/auth/login`,
-//          values
-//       )
-//       logging.info('Login successfully')
-//       callback(null, response.data.user)
-//    } catch (error) {
-//       logging.error(error)
-//       callback(error, null)
-//    }
-// }
+      const { data } = await axios.put(
+         `${config.server.url}/api/products/${id}`,
+         values
+      )
+      logging.info('product updated successfully')
 
-// const Register = async (
-//    values: any,
-//    callback: (error: any | null, user: IUser | null) => void
-// ) => {
-//    try {
-//       const response = await axios.post(
-//          `${config.server.url}/api/auth/register`,
-//          values
-//       )
-//       logging.info('Register successfully')
-//       callback(null, response.data.user)
-//    } catch (error) {
-//       logging.error(error)
-//       callback(error, null)
-//    }
-// }
+      return data
+   } catch (error) {
+      logging.error(error)
+      throw error
+   }
+}
+
+const Delete = async (id: any) => {
+   try {
+      const { data } = await axios.delete(`/api/products/${id}`)
+      return data
+   } catch (error) {
+      throw error
+   }
+}
 
 const ProductService = {
+   Delete,
    Create,
+   Update,
 }
 
 export default ProductService

@@ -11,20 +11,26 @@ export const getProducts = async (req: Request, res: Response) => {
    const pageSize = 10
    const page = Number(req.query.page) || 1
    const name = req.query.name || ''
+   const category = req.query.category || ''
    const _id = req.query.id || ''
 
    const _idFilter = _id ? { _id } : {}
    const nameFilter = name ? { name: { $regex: name, $options: 'i' } } : {}
+   const categoryFilter = category
+      ? { category: { $regex: category, $options: 'i' } }
+      : {}
 
    try {
       const count = await Products.countDocuments({
          ..._idFilter,
          ...nameFilter,
+         ...categoryFilter,
       })
 
       const products = await Products.find({
          ..._idFilter,
          ...nameFilter,
+         ...categoryFilter,
       })
          .select('-password')
          .skip(pageSize * (page - 1))
@@ -66,6 +72,45 @@ export const createProduct = async (req: Request, res: Response) => {
       })
    } catch (error) {
       logging.error(error)
+      return res.status(500).json({ error })
+   }
+}
+
+export const updateProduct = async (req: Request, res: Response) => {
+   const _id = req.params.id
+   logging.info(`Incoming update for ${_id} ...`)
+
+   try {
+      const product = await Products.findById(_id)
+      if (!product) throw 'Product not found'
+
+      const values = {
+         ...req.body,
+         photo: req.file
+            ? `${process.env.SERVER_URI}/uploads/${req.file?.filename}`
+            : product.photo,
+      }
+
+      product.set(values)
+
+      const productUpdated = await product?.save()
+      return res.status(200).json({ product: productUpdated })
+   } catch (error) {
+      return res.status(500).json(error)
+   }
+}
+
+export const deleteProduct = async (req: Request, res: Response) => {
+   const _id = req.params.id
+
+   try {
+      logging.info(`Incoming delete for ${_id}`)
+      await Products.deleteOne({ _id })
+
+      logging.info('Product deleted successfully')
+      return res.status(200).json({ message: 'Product deleted successfully' })
+   } catch (error) {
+      logging.error('Product failed to delete')
       return res.status(500).json({ error })
    }
 }

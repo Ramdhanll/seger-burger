@@ -3,7 +3,7 @@ import React, { FC, useEffect, useRef, useState } from 'react'
 
 interface ISearch {
    setQuerySearch: (e: string) => void
-   size: string
+   bg?: string
    borderColor?: string
    placeholder?: string
    borderRadius?: string
@@ -11,8 +11,7 @@ interface ISearch {
    px?: string
 }
 
-const Search: FC<ISearch> = (props) => {
-   const { setQuerySearch, ...rest } = props
+const Search: FC<ISearch> = ({ setQuerySearch, ...rest }) => {
    const [searchTyping, setSearchTyping] = useState<string>('')
    const timeoutRef = useRef<any>(null)
 

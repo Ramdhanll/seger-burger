@@ -5,7 +5,6 @@ import {
    FormErrorMessage,
    FormLabel,
    Select,
-   chakra,
 } from '@chakra-ui/react'
 
 interface IFormikSelect {
