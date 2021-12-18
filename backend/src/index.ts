@@ -4,7 +4,12 @@ import logging from './config/logging'
 import mongoose from 'mongoose'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
-import { authRouter, userRouter, productRouter } from './api/routes/'
+import {
+   authRouter,
+   userRouter,
+   productRouter,
+   categoryRouter,
+} from './api/routes/'
 import path from 'path'
 const __dirname = path.resolve()
 import dotenv from 'dotenv'
@@ -23,6 +28,11 @@ app.use(
 app.use(
    '/uploads',
    express.static(path.join(__dirname, '/src/uploads/products'))
+)
+
+app.use(
+   '/uploads',
+   express.static(path.join(__dirname, '/src/uploads/categories'))
 )
 
 app.use(cookieParser())
@@ -58,6 +68,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRouter)
 app.use('/api/users', userRouter)
 app.use('/api/products', productRouter)
+app.use('/api/categories', categoryRouter)
 
 // Error Handling
 app.use((req, res, next) => {

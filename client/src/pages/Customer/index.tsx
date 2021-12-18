@@ -3,10 +3,12 @@ import React, { FC } from 'react'
 import IPage from '../../interfaces/IPage'
 import Logo from '../../assets/logo.png'
 import Search from '../../components/Search'
+import useSWR from 'swr'
 
 const Customer: FC<IPage> = () => {
+   const { data: dataCategories } = useSWR(`/api/categories`)
    return (
-      <Box w='100vw' minH='100vh' bg='gray.50'>
+      <Box w='100vw' minH='100vh' bg='gray.50' overflowX='hidden'>
          {/* Navbar */}
          <Box
             bg='white'
@@ -23,7 +25,7 @@ const Customer: FC<IPage> = () => {
             <Image src={Logo} fallbackSrc='https://via.placeholder.com/150' />
          </Box>
 
-         <Cart display={{ base: 'none', md: 'block' }} />
+         <Cart display={{ base: 'none', md: 'none', lg: 'block' }} />
 
          {/* Main */}
          <Box
@@ -31,11 +33,16 @@ const Customer: FC<IPage> = () => {
             pr={['25px', '420px']}
             py={['15px', '20px']}
          >
-            <HStack justifyContent='space-between' alignItems='center'>
+            <HStack
+               justifyContent='space-between'
+               alignItems='center'
+               position='inherit'
+               w={['100vw']}
+               pr={['60px', '100px', '80px', '500px']}
+            >
                <Text fontSize={['xl', '2xl', '3xl']} fontWeight={600}>
                   Choose Menu
                </Text>
-               asdasdasd
                <Search
                   setQuerySearch={(e) => console.log(e)}
                   bg='white'
@@ -45,16 +52,26 @@ const Customer: FC<IPage> = () => {
 
             {/* Categories */}
             <HStack
-               spacing={8}
+               spacing={[10, 14, 6, 18]}
                justifyContent='start'
                alignItems='center'
                mt='30px'
+               w={['', '90vw', '90vw', '100%']}
+               pr={['60px', '100px', '0px', '']}
+               overflowX='auto'
+               py='5px'
+               px='5px'
+               boxSizing='border-box'
             >
-               <ItemCategory name='All' />
-               <ItemCategory name='Burger' />
-               <ItemCategory name='Snack' />
-               <ItemCategory name='Beer' />
-               <ItemCategory name='Coffee' />
+               <ItemCategory name='All' logo='' />
+               {dataCategories?.categories?.length &&
+                  dataCategories.categories.map((category: any, i: number) => (
+                     <ItemCategory
+                        key={i}
+                        name={category.name}
+                        logo={category.logo}
+                     />
+                  ))}
             </HStack>
          </Box>
       </Box>
@@ -195,9 +212,10 @@ const ItemOrder: FC<IItemOrder> = ({ name }) => {
 // Categories
 interface IItemCategory {
    name: string
+   logo: string
 }
 
-const ItemCategory: FC<IItemCategory> = ({ name }) => {
+const ItemCategory: FC<IItemCategory> = ({ name, logo }) => {
    return (
       <Button
          transition='ease-out .3s'
@@ -210,6 +228,8 @@ const ItemCategory: FC<IItemCategory> = ({ name }) => {
          }}
       >
          <Box
+            w={['60px', '80px', '80px', '80px']}
+            alignItems='center'
             transition='ease .5s'
             _groupHover={{ backgroundColor: 'yellow.400' }}
             boxShadow='md'
@@ -221,12 +241,14 @@ const ItemCategory: FC<IItemCategory> = ({ name }) => {
             py={4}
             gridGap={3}
          >
-            <Image
-               src='gibbresh.png'
-               fallbackSrc='https://via.placeholder.com/50'
-               w='50px'
-               borderRadius='lg'
-            />
+            <Box bg='white' p='10px' borderRadius='md'>
+               <Image
+                  src={logo}
+                  fallbackSrc='https://via.placeholder.com/50'
+                  w='50px'
+                  borderRadius='lg'
+               />
+            </Box>
             <Text
                transition='ease .5s'
                textAlign='center'

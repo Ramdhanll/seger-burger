@@ -8,6 +8,7 @@ import Login from '../pages/Login'
 import NotFound from '../pages/NotFound'
 import Register from '../pages/Register'
 import Customer from '../pages/Customer'
+import Category from '../pages/Admin/Category'
 
 const authRoutes: IRoute[] = [
    {
@@ -42,6 +43,11 @@ const adminRoutes: IRoute[] = [
          {
             path: 'product',
             element: <Product />,
+            auth: true,
+         },
+         {
+            path: 'category',
+            element: <Category />,
             auth: true,
          },
       ],

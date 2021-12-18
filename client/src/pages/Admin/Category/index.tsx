@@ -23,120 +23,91 @@ import {
    HStack,
 } from '@chakra-ui/react'
 import { Form, Formik } from 'formik'
-import React, { FC, useEffect, useState } from 'react'
+import React, { FC, useState } from 'react'
 import Heading from '../../../components/Admin/Heading'
 import Pagination from '../../../components/Pagination'
 import Search from '../../../components/Search'
 import IPage from '../../../interfaces/IPage'
 import * as Yup from 'yup'
-import { FormikInput, FormikPhoto, FormikSelect } from '../../../helpers/Formik'
+import { FormikInput, FormikPhoto } from '../../../helpers/Formik'
 import logging from '../../../config/logging'
-import ProductService from '../../../services/product'
+import CategoryService from '../../../services/category'
 import useSWR, { mutate } from 'swr'
 import { MdDelete, MdEdit } from 'react-icons/md'
 import AlertDialogDelete from '../../../components/AlertDialogDelete'
 import PreviewPhoto from '../../../components/PreviewPhoto'
 
-interface IProduct {
-   _id?: string
-   name: string
-   photo: string
-   // category: string
-
-   category: {
-      _id: string
-      name: string
-      logo: string
-   }
-   price: number
-}
-
-interface IProductFormValues {
-   name: string
-   category: string
-   price: number
-}
-
 interface ICategory {
-   _id: string
+   _id?: string
    name: string
    logo: string
 }
 
-const Product: FC<IPage> = () => {
+interface ICategoryFormValues {
+   name: string
+}
+
+const Category: FC<IPage> = () => {
    const toast = useToast()
    const { isOpen, onOpen, onClose } = useDisclosure()
 
-   const [productSelected, setProductSelected] = useState<IProduct | null>()
+   const [categorySelected, setCategorySelected] = useState<ICategory | null>()
    const [isAdd, setIsAdd] = useState<boolean>(true)
 
    const [page, setPage] = useState<number>(1)
    const [searchValue, setSearchValue] = useState<string>('')
 
-   const { data: dataProducts } = useSWR(
-      `/api/products?page=${page}&name=${searchValue}`
+   const { data: dataCategories } = useSWR(
+      `/api/categories?page=${page}&name=${searchValue}`
    )
 
-   const { data: dataCategories } = useSWR(`/api/categories?limit=50`)
-   const [categoryOptions, setCategoryOptions] = useState([])
-   useEffect(() => {
-      if (dataCategories?.categories.length) {
-         const options = dataCategories.categories.map(
-            (category: ICategory, i: number) => {
-               return {
-                  key: i,
-                  name: category.name,
-                  value: category._id,
-               }
-            }
-         )
-
-         setCategoryOptions(options)
-      }
-   }, [dataCategories])
    const handlePagination = (i: number) => {
       setPage(i)
    }
 
-   // SECTION ADD AND EDIT PRODUCT
+   // SECTION ADD AND EDIT CATEGORY
+
+   const cleanForm = () => {
+      setCategorySelected(null)
+      setPhotoFile('')
+   }
 
    const handleOpenModalAddEdit = ({
       isAdd,
-      product,
+      category,
    }: {
       isAdd: boolean
-      product?: IProduct
+      category?: ICategory
    }) => {
+      cleanForm()
+      setPhotoPrev(null)
       setIsAdd(isAdd)
-      if (product) setProductSelected(product)
+      if (category) setCategorySelected(category)
       onOpen()
    }
 
    const [photoFile, setPhotoFile] = useState('')
    const [photoPrev, setPhotoPrev] = useState<any>('')
 
-   const initialValues: IProductFormValues = {
-      name: productSelected?.name || '',
-      category: productSelected?.category._id || '',
-      price: productSelected?.price || 0,
+   const initialValues: ICategoryFormValues = {
+      name: categorySelected?.name || '',
    }
 
    const validationSchema = Yup.object({
       name: Yup.string().required('Name required'),
-      category: Yup.string().required('Category required'),
-      price: Yup.number().required('Price required'),
    })
 
-   const handlePreviewPhoto = (e: any) => {
+   const handlePreviewLogo = (e: any) => {
       const file = e.target.files[0]
       console.log(file)
       var t = file.type.split('/').pop().toLowerCase()
+      console.log('t', t)
       if (
          t !== 'jpeg' &&
          t !== 'jpg' &&
          t !== 'png' &&
-         t !== 'bmp' &&
-         t !== 'gif'
+         t !== 'svg' &&
+         t !== 'svg+xml'
       ) {
          toast({
             title: 'Gagal',
@@ -159,7 +130,7 @@ const Product: FC<IPage> = () => {
    }
 
    const handleSubmit = async (values: any, actions: any) => {
-      logging.info('creating product ....')
+      logging.info('creating category ....')
 
       try {
          if (isAdd) {
@@ -167,25 +138,32 @@ const Product: FC<IPage> = () => {
          }
 
          const reqData = new FormData()
-         reqData.append('photo', photoFile)
+         reqData.append('logo', photoFile)
          reqData.append('name', values.name)
-         reqData.append('category', values.category)
-         reqData.append('price', values.price)
 
          if (isAdd) {
-            await ProductService.Create(reqData)
+            await CategoryService.Create(reqData)
          } else {
-            await ProductService.Update(productSelected?._id, reqData)
+            await CategoryService.Update(categorySelected?._id, reqData)
          }
 
+         toast({
+            title: 'Success',
+            description: `Category  ${
+               isAdd ? 'created' : 'edited'
+            } successfully`,
+            status: 'success',
+            duration: 5000,
+            isClosable: true,
+            position: 'top-right',
+         })
          actions.setSubmitting(false)
 
          // mutate swr
-         mutate(`/api/products?page=${page}&name=${searchValue}`)
+         mutate(`/api/categories?page=${page}&name=${searchValue}`)
          onClose()
-         setProductSelected(null)
+         cleanForm()
       } catch (error) {
-         setProductSelected(null)
          actions.setSubmitting(false)
       }
    }
@@ -212,26 +190,23 @@ const Product: FC<IPage> = () => {
    const [isLoadingAlertDelete, setIsLoadingAlertDelete] =
       useState<boolean>(false)
 
-   const handleOpenAlertDelete = (product: IProduct) => {
-      setProductSelected(product)
+   const handleOpenAlertDelete = (category: ICategory) => {
+      setCategorySelected(category)
       onOpenAlertDelete()
    }
 
    const handleConfirmDelete = async () => {
       setIsLoadingAlertDelete(true)
       try {
-         await ProductService.Delete(productSelected?._id)
-         mutate(`/api/products?page=${page}&name=${searchValue}`)
+         await CategoryService.Delete(categorySelected?._id)
+         mutate(`/api/categories?page=${page}&name=${searchValue}`)
          setIsLoadingAlertDelete(false)
          onCloseAlertDelete()
-         setProductSelected(null)
       } catch (error) {
-         setProductSelected(null)
-
          setIsLoadingAlertDelete(false)
          toast({
             title: 'Failed',
-            description: 'Failed delete product',
+            description: 'Failed delete category',
             status: 'error',
             duration: 3000,
             isClosable: true,
@@ -247,7 +222,7 @@ const Product: FC<IPage> = () => {
    return (
       <Box textAlign='left' py={3} bg='white' alignItems='center'>
          <Flex justifyContent='space-between'>
-            <Heading>PRODUCT</Heading>
+            <Heading>CATEGORY</Heading>
             <Button
                variant='solid'
                bg='yellow.400'
@@ -256,7 +231,7 @@ const Product: FC<IPage> = () => {
                onClick={() => handleOpenModalAddEdit({ isAdd: true })}
                _focus={{ outline: 'none' }}
             >
-               <Text>New Product</Text>
+               <Text>New Category</Text>
             </Button>
          </Flex>
          <Box mt='20px'>
@@ -275,28 +250,26 @@ const Product: FC<IPage> = () => {
                <Thead>
                   <Tr>
                      <Th>No</Th>
-                     <Th>Photo</Th>
+                     <Th>Logo</Th>
                      <Th>Name</Th>
-                     <Th>Category</Th>
-                     <Th>Price</Th>
                      <Th>Actions</Th>
                   </Tr>
                </Thead>
                <Tbody>
-                  {dataProducts?.products?.length ? (
-                     dataProducts?.products?.map(
-                        (product: IProduct, i: number) => (
+                  {dataCategories?.categories?.length ? (
+                     dataCategories?.categories?.map(
+                        (category: ICategory, i: number) => (
                            <Tr key={i}>
                               <Td>{i + 1}</Td>
                               <Td>
                                  <Box
                                     cursor='pointer'
                                     onClick={() =>
-                                       handlePreviewPhotoOnTable(product.photo)
+                                       handlePreviewPhotoOnTable(category.logo)
                                     }
                                  >
                                     <Image
-                                       src={product.photo}
+                                       src={category.logo}
                                        fallbackSrc='https://via.placeholder.com/50'
                                        w='100px'
                                        h='50px'
@@ -306,19 +279,10 @@ const Product: FC<IPage> = () => {
                               </Td>
                               <Td>
                                  <Text fontSize={['xs', 'sm', 'md']}>
-                                    {product.name}
+                                    {category.name}
                                  </Text>
                               </Td>
-                              <Td>
-                                 <Text fontSize={['xs', 'sm', 'md']}>
-                                    {product.category.name}
-                                 </Text>
-                              </Td>
-                              <Td>
-                                 <Text fontSize={['xs', 'sm', 'md']}>
-                                    {product.price}
-                                 </Text>
-                              </Td>
+
                               <Td>
                                  <HStack spacing={3}>
                                     <Button
@@ -327,7 +291,7 @@ const Product: FC<IPage> = () => {
                                        onClick={() =>
                                           handleOpenModalAddEdit({
                                              isAdd: false,
-                                             product: product,
+                                             category: category,
                                           })
                                        }
                                     >
@@ -337,7 +301,7 @@ const Product: FC<IPage> = () => {
                                        variant='outline'
                                        colorScheme='red'
                                        onClick={() =>
-                                          handleOpenAlertDelete(product)
+                                          handleOpenAlertDelete(category)
                                        }
                                     >
                                        <MdDelete size='16px' />
@@ -363,24 +327,19 @@ const Product: FC<IPage> = () => {
             </Table>
          </Box>
 
-         <Box display={dataProducts?.products?.length ? 'inline' : 'none'}>
+         <Box display={dataCategories?.categories?.length ? 'inline' : 'none'}>
             <Pagination
-               page={dataProducts?.page}
-               pages={dataProducts?.pages}
+               page={dataCategories?.page}
+               pages={dataCategories?.pages}
                handlePagination={(e) => handlePagination(e)}
             />
          </Box>
 
-         {/* Modal Add Product */}
-         <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            size='xs'
-            onOverlayClick={() => setProductSelected(null)}
-         >
+         {/* Modal Add Category */}
+         <Modal isOpen={isOpen} onClose={onClose} size='xs'>
             <ModalOverlay />
             <ModalContent>
-               <ModalHeader>Add Product</ModalHeader>
+               <ModalHeader>Add Category</ModalHeader>
                <ModalCloseButton _focus={{ outline: 'none' }} />
                <ModalBody>
                   <Box
@@ -392,8 +351,10 @@ const Product: FC<IPage> = () => {
                   >
                      <Image
                         borderRadius='md'
-                        src={photoPrev || productSelected?.photo}
-                        fallbackSrc='https://via.placeholder.com/150'
+                        src={photoPrev || categorySelected?.logo}
+                        fallbackSrc='https://via.placeholder.com/50'
+                        w='50px'
+                        h='50px'
                      />
                   </Box>
                   <Formik
@@ -405,31 +366,17 @@ const Product: FC<IPage> = () => {
                      {(props) => (
                         <Form>
                            <VStack spacing={5}>
+                              <FormikPhoto
+                                 name='logo'
+                                 label='Logo'
+                                 onChange={handlePreviewLogo}
+                              />
                               <FormikInput
                                  name='name'
                                  label='Name'
                                  required={true}
-                                 placeholder='the name of product'
+                                 placeholder='the name of category'
                               />
-                              <FormikSelect
-                                 name='category'
-                                 label='Category'
-                                 options={categoryOptions}
-                                 placeholder='Select category'
-                              />
-                              <FormikInput
-                                 name='price'
-                                 type='number'
-                                 label='Price'
-                                 required={true}
-                              />
-
-                              <FormikPhoto
-                                 name='photo'
-                                 label='Photo'
-                                 onChange={handlePreviewPhoto}
-                              />
-
                               <Button
                                  type='submit'
                                  isLoading={props.isSubmitting}
@@ -456,9 +403,9 @@ const Product: FC<IPage> = () => {
             image={prevPhotoOnTable}
          />
 
-         {/* Alert delete product */}
+         {/* Alert delete category */}
          <AlertDialogDelete
-            header='Delete Product'
+            header='Delete Category'
             body='Deleting the machine will delete all dependent data with this ID, Are you sure you want to delete?'
             isOpen={isOpenAlertDelete}
             onClose={onCloseAlertDelete}
@@ -470,4 +417,4 @@ const Product: FC<IPage> = () => {
    )
 }
 
-export default Product
+export default Category

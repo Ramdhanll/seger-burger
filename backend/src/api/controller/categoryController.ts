@@ -1,14 +1,15 @@
 import { Request, Response } from 'express'
 import logging from '../../config/logging'
 import { validationResult } from 'express-validator'
-import Products from '../models/productModel'
 import dotenv from 'dotenv'
+import Categories from '../models/categoryModel'
+import Products from '../models/productModel'
 dotenv.config()
 
-export const getProducts = async (req: Request, res: Response) => {
-   logging.info(`Incoming get products`)
+export const getCategories = async (req: Request, res: Response) => {
+   logging.info(`Incoming get categories`)
 
-   const pageSize = 10
+   const pageSize = Number(req.query.limit) || 10
    const page = Number(req.query.page) || 1
    const name = req.query.name || ''
    const category = req.query.category || ''
@@ -21,24 +22,21 @@ export const getProducts = async (req: Request, res: Response) => {
       : {}
 
    try {
-      const count = await Products.countDocuments({
+      const count = await Categories.countDocuments({
          ..._idFilter,
          ...nameFilter,
-         ...categoryFilter,
       })
 
-      const products = await Products.find({
+      const categories = await Categories.find({
          ..._idFilter,
          ...nameFilter,
-         ...categoryFilter,
       })
          .select('-password')
-         .populate('category')
          .skip(pageSize * (page - 1))
          .limit(pageSize)
 
       res.status(200).json({
-         products,
+         categories,
          page,
          pages: Math.ceil(count / pageSize),
       })
@@ -47,8 +45,8 @@ export const getProducts = async (req: Request, res: Response) => {
    }
 }
 
-export const createProduct = async (req: Request, res: Response) => {
-   logging.info('Incoming create product')
+export const createCategory = async (req: Request, res: Response) => {
+   logging.info('Incoming create category')
 
    const errors = validationResult(req)
    if (!errors.isEmpty()) {
@@ -56,20 +54,20 @@ export const createProduct = async (req: Request, res: Response) => {
    }
 
    try {
-      if (!req.file) throw 'Photo diperlukan'
+      if (!req.file) throw 'Logo diperlukan'
 
-      const createProduct = new Products({
+      const createCategory = new Categories({
          ...req.body,
-         photo: `${process.env.SERVER_URI}/uploads/${req.file?.filename}`,
+         logo: `${process.env.SERVER_URI}/uploads/${req.file?.filename}`,
       })
-      const createdProduct = await createProduct.save()
+      const createdCategory = await createCategory.save()
 
-      logging.info('Product created successfully')
+      logging.info('Category created successfully')
 
       res.status(201).json({
          status: 'success',
-         product: createdProduct,
-         message: 'Product has been created',
+         category: createdCategory,
+         message: 'Category has been created',
       })
    } catch (error) {
       logging.error(error)
@@ -77,41 +75,43 @@ export const createProduct = async (req: Request, res: Response) => {
    }
 }
 
-export const updateProduct = async (req: Request, res: Response) => {
+export const updateCategory = async (req: Request, res: Response) => {
    const _id = req.params.id
    logging.info(`Incoming update for ${_id} ...`)
 
    try {
-      const product = await Products.findById(_id)
-      if (!product) throw 'Product not found'
+      const category = await Categories.findById(_id)
+      if (!category) throw 'Category not found'
 
       const values = {
          ...req.body,
-         photo: req.file
+         logo: req.file
             ? `${process.env.SERVER_URI}/uploads/${req.file?.filename}`
-            : product.photo,
+            : category.logo,
       }
 
-      product.set(values)
+      category.set(values)
 
-      const productUpdated = await product?.save()
-      return res.status(200).json({ product: productUpdated })
+      const categoryUpdated = await category?.save()
+      return res.status(200).json({ category: categoryUpdated })
    } catch (error) {
       return res.status(500).json(error)
    }
 }
 
-export const deleteProduct = async (req: Request, res: Response) => {
+export const deleteCategory = async (req: Request, res: Response) => {
    const _id = req.params.id
 
    try {
       logging.info(`Incoming delete for ${_id}`)
-      await Products.deleteOne({ _id })
 
-      logging.info('Product deleted successfully')
-      return res.status(200).json({ message: 'Product deleted successfully' })
+      await Products.deleteMany({ category: _id })
+      await Categories.deleteOne({ _id })
+
+      logging.info('Category deleted successfully')
+      return res.status(200).json({ message: 'Category deleted successfully' })
    } catch (error) {
-      logging.error('Product failed to delete')
+      logging.error('Category failed to delete')
       return res.status(500).json({ error })
    }
 }

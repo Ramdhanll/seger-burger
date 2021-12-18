@@ -60,7 +60,7 @@ const LinkItems: Array<LinkItemProps> = [
    { name: 'Dashboard', icon: FiHome, to: '/admin' },
    { name: 'Order', icon: FiTrendingUp, to: '/admin/order' },
    { name: 'Product', icon: FiCompass, to: '/admin/product' },
-   { name: 'Favourites', icon: FiStar, to: '/admin/Favourites' },
+   { name: 'Category', icon: FiStar, to: '/admin/category' },
    { name: 'Settings', icon: FiSettings, to: '/admin/Settings' },
 ]
 
