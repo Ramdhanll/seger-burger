@@ -1,5 +1,5 @@
 import { Input, InputGroup } from '@chakra-ui/react'
-import React, { FC, useEffect, useRef, useState } from 'react'
+import React, { FC, memo, useEffect, useRef, useState } from 'react'
 
 interface ISearch {
    setQuerySearch: (e: string) => void
@@ -11,7 +11,7 @@ interface ISearch {
    px?: string
 }
 
-const Search: FC<ISearch> = ({ setQuerySearch, ...rest }) => {
+const Search: FC<ISearch> = memo(({ setQuerySearch, ...rest }) => {
    const [searchTyping, setSearchTyping] = useState<string>('')
    const timeoutRef = useRef<any>(null)
 
@@ -31,6 +31,6 @@ const Search: FC<ISearch> = ({ setQuerySearch, ...rest }) => {
          <Input {...rest} onChange={(e) => setSearchTyping(e.target.value)} />
       </InputGroup>
    )
-}
+})
 
 export default Search

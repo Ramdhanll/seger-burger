@@ -5,8 +5,10 @@ interface IProductModel extends Document {
    _id?: string | object // type object for query search in controller
    name: string | object // type object for query search in controller
    photo: string
+   weight: string
    category: object
    price: number
+   qty: number
 }
 
 const ProductSchema = new Schema<IProductModel>(
@@ -19,6 +21,9 @@ const ProductSchema = new Schema<IProductModel>(
          type: String,
          required: true,
       },
+      weight: {
+         type: String,
+      },
       category: {
          type: ObjectId,
          ref: 'Categories',
@@ -26,6 +31,10 @@ const ProductSchema = new Schema<IProductModel>(
       price: {
          type: Number,
          required: true,
+      },
+      qty: {
+         type: Number,
+         default: 0,
       },
    },
    {

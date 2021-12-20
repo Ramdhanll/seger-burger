@@ -3,6 +3,7 @@ import logging from '../../config/logging'
 import { validationResult } from 'express-validator'
 import Products from '../models/productModel'
 import dotenv from 'dotenv'
+import Categories from '../models/categoryModel'
 dotenv.config()
 
 export const getProducts = async (req: Request, res: Response) => {
@@ -16,9 +17,11 @@ export const getProducts = async (req: Request, res: Response) => {
 
    const _idFilter = _id ? { _id } : {}
    const nameFilter = name ? { name: { $regex: name, $options: 'i' } } : {}
-   const categoryFilter = category
-      ? { category: { $regex: category, $options: 'i' } }
-      : {}
+
+   // Filter by catyegory
+   const getCategory = await Categories.find({ name: category })
+
+   const categoryFilter = category ? { category: getCategory } : {}
 
    try {
       const count = await Products.countDocuments({
@@ -43,6 +46,7 @@ export const getProducts = async (req: Request, res: Response) => {
          pages: Math.ceil(count / pageSize),
       })
    } catch (error) {
+      logging.error(error)
       res.status(500).json({ message: 'Server down!', error })
    }
 }

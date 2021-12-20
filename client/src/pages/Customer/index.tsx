@@ -1,31 +1,75 @@
-import { Box, Button, HStack, Image, Text, VStack } from '@chakra-ui/react'
-import React, { FC } from 'react'
+import { Box, Flex, HStack, Image, Text } from '@chakra-ui/react'
+import React, { FC, useState } from 'react'
 import IPage from '../../interfaces/IPage'
 import Logo from '../../assets/logo.png'
 import Search from '../../components/Search'
 import useSWR from 'swr'
+import Cart from '../../components/Customer/Cart'
+import ItemCategory from '../../components/Customer/ItemCategory'
+import ItemProduct from '../../components/Customer/ItemProduct'
+import LogoAll from '../../assets/all.svg'
+import IProduct from '../../interfaces/IProduct'
+
+interface IOrders extends IProduct {}
 
 const Customer: FC<IPage> = () => {
+   const [categoryActive, setCategoryActive] = useState<string>('')
+   const [search, setSearch] = useState<string>('')
+   const [orders, setOrders] = useState<IOrders[]>([])
+
    const { data: dataCategories } = useSWR(`/api/categories`)
+   const { data: dataProducts } = useSWR(
+      `/api/products?category=${categoryActive}&name=${search}`
+   )
+
+   const handleOrder = (product: IOrders) => {
+      // find order
+      let exist = false
+
+      /**
+       * cari variable order yang id nya sama dengan props
+       * jika ada replace qty + 1
+       * jika tidak push props to orders
+       */
+
+      orders.find((order, i) => {
+         if (order._id === product._id) {
+            const newOrders = orders
+            newOrders[i].qty += 1
+            setOrders([...newOrders])
+            exist = true
+            return true
+         }
+
+         return false
+      })
+
+      if (!exist) {
+         product.qty = 1
+         setOrders([...orders, product])
+      }
+   }
+
    return (
       <Box w='100vw' minH='100vh' bg='gray.50' overflowX='hidden'>
          {/* Navbar */}
          <Box
             bg='white'
             d='flex'
-            w='100%'
+            w={{ base: '100%', md: '100%', lg: '80%', xl: '80%' }}
             justifyContent='center'
             h='60px'
-            position='sticky'
             borderBottomWidth='1px'
             borderColor='gray.200'
             py={2}
-            // boxShadow='xs'
          >
             <Image src={Logo} fallbackSrc='https://via.placeholder.com/150' />
          </Box>
 
-         <Cart display={{ base: 'none', md: 'none', lg: 'block' }} />
+         <Cart
+            orders={orders}
+            display={{ base: 'none', md: 'none', lg: 'block' }}
+         />
 
          {/* Main */}
          <Box
@@ -44,7 +88,7 @@ const Customer: FC<IPage> = () => {
                   Choose Menu
                </Text>
                <Search
-                  setQuerySearch={(e) => console.log(e)}
+                  setQuerySearch={(e) => setSearch(e)}
                   bg='white'
                   placeholder='Search menu ...'
                />
@@ -63,203 +107,50 @@ const Customer: FC<IPage> = () => {
                px='5px'
                boxSizing='border-box'
             >
-               <ItemCategory name='All' logo='' />
-               {dataCategories?.categories?.length &&
+               <ItemCategory
+                  id=''
+                  name='All'
+                  logo={LogoAll}
+                  active={categoryActive}
+                  setCategoryActive={(e) => setCategoryActive('')}
+               />
+               {dataCategories?.categories.length &&
                   dataCategories.categories.map((category: any, i: number) => (
                      <ItemCategory
+                        id={i}
                         key={i}
                         name={category.name}
                         logo={category.logo}
+                        active={categoryActive}
+                        setCategoryActive={(e) => setCategoryActive(e)}
                      />
                   ))}
             </HStack>
-         </Box>
-      </Box>
-   )
-}
 
-const Cart = ({ ...rest }) => {
-   return (
-      <Box
-         transition='3s ease'
-         p='20px'
-         h='full'
-         right={0}
-         w={{ base: 'full', md: 'sm' }}
-         pos='fixed'
-         bg='white'
-         boxShadow='sm'
-         {...rest}
-      >
-         <Text fontWeight={600} fontSize={['sm', 'md', 'lg']}>
-            Current Order
-         </Text>
-
-         <VStack
-            pr={2}
-            spacing={3}
-            mt='30px'
-            maxH={60}
-            overflowY='auto'
-            css={{
-               '&::-webkit-scrollbar': {
-                  width: '4px',
-               },
-               '&::-webkit-scrollbar-track': {
-                  width: '6px',
-               },
-               '&::-webkit-scrollbar-thumb': {
-                  backgroundColor: 'gray',
-                  borderRadius: '24px',
-               },
-            }}
-         >
-            <ItemOrder name='Stuffed Flack Steak' />
-            <ItemOrder name='Burger 2' />
-            <ItemOrder name='Burger 3' />
-            <ItemOrder name='Burger 3' />
-            <ItemOrder name='Burger 3' />
-            <ItemOrder name='Burger 3' />
-            <ItemOrder name='Burger 3' />
-            <ItemOrder name='Burger 3' />
-         </VStack>
-
-         <Box mt='30px'>
-            <HStack justifyContent='space-between'>
-               <Text fontWeight='500' fontSize={['xs', 'sm']}>
-                  Subtotal
-               </Text>
-               <Text fontWeight='500' fontSize={['xs', 'sm']}>
-                  120k
-               </Text>
-            </HStack>
-            <hr
-               style={{
-                  borderTop: '1px dashed gray',
-                  marginTop: '15px',
-                  marginBottom: '15px',
-               }}
-            />
-            <HStack justifyContent='space-between'>
-               <Text fontWeight='500' fontSize={['xs', 'sm']}>
-                  Total
-               </Text>
-               <Text fontWeight='500' fontSize={['xs', 'sm', 'lg']}>
-                  120k
-               </Text>
-            </HStack>
-
-            <Box justifyContent='end' d='flex' w='100%' mt='30px'>
-               <Button variant='solid' colorScheme='yellow' w='full'>
-                  Order
-               </Button>
-            </Box>
-         </Box>
-      </Box>
-   )
-}
-
-interface IItemOrder {
-   name: string
-}
-
-const ItemOrder: FC<IItemOrder> = ({ name }) => {
-   return (
-      <Box
-         d='flex'
-         justifyContent='space-between'
-         alignItems='center'
-         gridGap={4}
-         w='100%'
-      >
-         <HStack spacing={2} alignItems='center' justifyContent='start' w='40%'>
-            <Image
-               src='gibbresh.png'
-               fallbackSrc='https://via.placeholder.com/150'
-               w='50px'
-               h='50px'
-               borderRadius='sm'
-            />
-            <Text fontSize={['xs', 'sm']} color='gray.600' fontWeight={400}>
-               {name}
-            </Text>
-         </HStack>
-
-         <HStack spacing={3} alignItems='center' justifyContent='start' w='40%'>
-            <Button variant='solid' colorScheme='gray'>
-               -
-            </Button>
-            <Text fontSize={['xs', 'sm']} color='gray.600' fontWeight={400}>
-               32
-            </Text>
-            <Button variant='solid' colorScheme='gray'>
-               +
-            </Button>
-         </HStack>
-
-         <Text
-            textAlign='right'
-            fontSize={['xs', 'sm']}
-            fontWeight={500}
-            w='10%'
-         >
-            32K
-         </Text>
-      </Box>
-   )
-}
-
-// Categories
-interface IItemCategory {
-   name: string
-   logo: string
-}
-
-const ItemCategory: FC<IItemCategory> = ({ name, logo }) => {
-   return (
-      <Button
-         transition='ease-out .3s'
-         variant='unstyled'
-         h='max-content'
-         role='group'
-         _focus={{ outline: 'none' }}
-         _active={{
-            transform: 'translateY(4px)',
-         }}
-      >
-         <Box
-            w={['60px', '80px', '80px', '80px']}
-            alignItems='center'
-            transition='ease .5s'
-            _groupHover={{ backgroundColor: 'yellow.400' }}
-            boxShadow='md'
-            borderRadius='lg'
-            bg='white'
-            d='flex'
-            flexDirection='column'
-            px={3}
-            py={4}
-            gridGap={3}
-         >
-            <Box bg='white' p='10px' borderRadius='md'>
-               <Image
-                  src={logo}
-                  fallbackSrc='https://via.placeholder.com/50'
-                  w='50px'
-                  borderRadius='lg'
-               />
-            </Box>
-            <Text
-               transition='ease .5s'
-               textAlign='center'
-               fontWeight={400}
-               color='gray.400'
-               _groupHover={{ color: 'gray.800', fontWeight: 500 }}
+            {/* Menu */}
+            <Flex
+               wrap='wrap'
+               gridGap={{ base: 4, md: 10 }}
+               mt='30px'
+               w={['', '90vw', '90vw', '100%']}
+               alignItems='start'
+               justifyContent='start'
             >
-               {name}
-            </Text>
+               {dataProducts?.products?.length ? (
+                  dataProducts?.products?.map((product: any, i: number) => (
+                     <ItemProduct
+                        handleOrder={(product) => handleOrder(product)}
+                        key={i}
+                        product={product}
+                     />
+                  ))
+               ) : (
+                  <Text>Data tidak ditemukan</Text>
+               )}
+            </Flex>
          </Box>
-      </Button>
+      </Box>
    )
 }
+
 export default Customer

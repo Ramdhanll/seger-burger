@@ -41,20 +41,22 @@ interface IProduct {
    _id?: string
    name: string
    photo: string
-   // category: string
-
+   weight: string
    category: {
       _id: string
       name: string
       logo: string
    }
    price: number
+   qty: number
 }
 
 interface IProductFormValues {
    name: string
    category: string
+   weight: string
    price: number
+   qty: number
 }
 
 interface ICategory {
@@ -79,6 +81,7 @@ const Product: FC<IPage> = () => {
 
    const { data: dataCategories } = useSWR(`/api/categories?limit=50`)
    const [categoryOptions, setCategoryOptions] = useState([])
+
    useEffect(() => {
       if (dataCategories?.categories.length) {
          const options = dataCategories.categories.map(
@@ -118,18 +121,21 @@ const Product: FC<IPage> = () => {
    const initialValues: IProductFormValues = {
       name: productSelected?.name || '',
       category: productSelected?.category._id || '',
+      weight: productSelected?.weight || '',
       price: productSelected?.price || 0,
+      qty: productSelected?.qty || 0,
    }
 
    const validationSchema = Yup.object({
       name: Yup.string().required('Name required'),
       category: Yup.string().required('Category required'),
+      weight: Yup.string().required('Weight required'),
       price: Yup.number().required('Price required'),
+      qty: Yup.number().required('Qty required'),
    })
 
    const handlePreviewPhoto = (e: any) => {
       const file = e.target.files[0]
-      console.log(file)
       var t = file.type.split('/').pop().toLowerCase()
       if (
          t !== 'jpeg' &&
@@ -169,8 +175,10 @@ const Product: FC<IPage> = () => {
          const reqData = new FormData()
          reqData.append('photo', photoFile)
          reqData.append('name', values.name)
+         reqData.append('weight', values.weight)
          reqData.append('category', values.category)
          reqData.append('price', values.price)
+         reqData.append('qty', values.qty)
 
          if (isAdd) {
             await ProductService.Create(reqData)
@@ -183,9 +191,9 @@ const Product: FC<IPage> = () => {
          // mutate swr
          mutate(`/api/products?page=${page}&name=${searchValue}`)
          onClose()
-         setProductSelected(null)
+         cleanForm()
       } catch (error) {
-         setProductSelected(null)
+         cleanForm()
          actions.setSubmitting(false)
       }
    }
@@ -224,9 +232,10 @@ const Product: FC<IPage> = () => {
          mutate(`/api/products?page=${page}&name=${searchValue}`)
          setIsLoadingAlertDelete(false)
          onCloseAlertDelete()
-         setProductSelected(null)
+
+         cleanForm()
       } catch (error) {
-         setProductSelected(null)
+         cleanForm()
 
          setIsLoadingAlertDelete(false)
          toast({
@@ -242,6 +251,12 @@ const Product: FC<IPage> = () => {
 
    const handleCloseAlertDelete = () => {
       onCloseAlertDelete()
+   }
+
+   const cleanForm = () => {
+      setProductSelected(null)
+      setPhotoFile('')
+      setPhotoPrev('')
    }
 
    return (
@@ -277,7 +292,9 @@ const Product: FC<IPage> = () => {
                      <Th>No</Th>
                      <Th>Photo</Th>
                      <Th>Name</Th>
+                     <Th>Weight</Th>
                      <Th>Category</Th>
+                     <Th>Qty</Th>
                      <Th>Price</Th>
                      <Th>Actions</Th>
                   </Tr>
@@ -311,12 +328,22 @@ const Product: FC<IPage> = () => {
                               </Td>
                               <Td>
                                  <Text fontSize={['xs', 'sm', 'md']}>
+                                    {product.weight}
+                                 </Text>
+                              </Td>
+                              <Td>
+                                 <Text fontSize={['xs', 'sm', 'md']}>
                                     {product.category.name}
                                  </Text>
                               </Td>
                               <Td>
                                  <Text fontSize={['xs', 'sm', 'md']}>
-                                    {product.price}
+                                    {product.qty}
+                                 </Text>
+                              </Td>
+                              <Td>
+                                 <Text fontSize={['xs', 'sm', 'md']}>
+                                    {product.price} K
                                  </Text>
                               </Td>
                               <Td>
@@ -376,7 +403,7 @@ const Product: FC<IPage> = () => {
             isOpen={isOpen}
             onClose={onClose}
             size='xs'
-            onOverlayClick={() => setProductSelected(null)}
+            onOverlayClick={() => cleanForm()}
          >
             <ModalOverlay />
             <ModalContent>
@@ -405,6 +432,11 @@ const Product: FC<IPage> = () => {
                      {(props) => (
                         <Form>
                            <VStack spacing={5}>
+                              <FormikPhoto
+                                 name='photo'
+                                 label='Photo'
+                                 onChange={handlePreviewPhoto}
+                              />
                               <FormikInput
                                  name='name'
                                  label='Name'
@@ -418,16 +450,23 @@ const Product: FC<IPage> = () => {
                                  placeholder='Select category'
                               />
                               <FormikInput
+                                 name='weight'
+                                 label='Weight'
+                                 required={true}
+                                 placeholder='the weight of product e.g 100 g'
+                              />
+                              <FormikInput
                                  name='price'
                                  type='number'
                                  label='Price'
                                  required={true}
                               />
 
-                              <FormikPhoto
-                                 name='photo'
-                                 label='Photo'
-                                 onChange={handlePreviewPhoto}
+                              <FormikInput
+                                 name='qty'
+                                 type='number'
+                                 label='Qty'
+                                 required={true}
                               />
 
                               <Button

@@ -70,6 +70,7 @@ const Category: FC<IPage> = () => {
    const cleanForm = () => {
       setCategorySelected(null)
       setPhotoFile('')
+      setPhotoPrev('')
    }
 
    const handleOpenModalAddEdit = ({
