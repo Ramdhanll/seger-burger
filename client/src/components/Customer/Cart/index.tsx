@@ -1,14 +1,22 @@
-import { Box, Button, HStack, Text, VStack } from '@chakra-ui/react'
+import { Box, Button, HStack, Link, Text, VStack } from '@chakra-ui/react'
 import { FC } from 'react'
+import { NavLink } from 'react-router-dom'
 import IProduct from '../../../interfaces/IProduct'
 import ItemOrder from './ItemOrder'
 
 interface ICart {
    orders: IProduct[]
    display: any
+   handleAddOrder: (product: IProduct) => void
+   handleRemoveOrder: (product: IProduct) => void
 }
 
-const Cart: FC<ICart> = ({ orders, display }) => {
+const Cart: FC<ICart> = ({
+   orders,
+   display,
+   handleAddOrder,
+   handleRemoveOrder,
+}) => {
    return (
       <Box
          transition='3s ease'
@@ -46,7 +54,12 @@ const Cart: FC<ICart> = ({ orders, display }) => {
             }}
          >
             {orders.map((order, i) => (
-               <ItemOrder key={i} order={order} />
+               <ItemOrder
+                  key={i}
+                  order={order}
+                  handleAddOrder={handleAddOrder}
+                  handleRemoveOrder={handleRemoveOrder}
+               />
             ))}
          </VStack>
 
@@ -56,7 +69,11 @@ const Cart: FC<ICart> = ({ orders, display }) => {
                   Subtotal
                </Text>
                <Text fontWeight='500' fontSize={['xs', 'sm']}>
-                  120k
+                  {orders.reduce(
+                     (total, num) => total + num.price * num.qty,
+                     0
+                  )}
+                  K
                </Text>
             </HStack>
             <hr
@@ -71,7 +88,11 @@ const Cart: FC<ICart> = ({ orders, display }) => {
                   Total
                </Text>
                <Text fontWeight='500' fontSize={['xs', 'sm', 'lg']}>
-                  120k
+                  {orders.reduce(
+                     (total, num) => total + num.price * num.qty,
+                     0
+                  )}{' '}
+                  K
                </Text>
             </HStack>
 
@@ -87,6 +108,18 @@ const Cart: FC<ICart> = ({ orders, display }) => {
                >
                   Order
                </Button>
+            </Box>
+            <Box mt={3}>
+               <Link as={NavLink} to='/order/qweqwe/transactions'>
+                  <Text
+                     color='linkedin.700'
+                     fontWeight={300}
+                     textAlign='center'
+                     textDecoration='underline'
+                  >
+                     view purchases
+                  </Text>
+               </Link>
             </Box>
          </Box>
       </Box>

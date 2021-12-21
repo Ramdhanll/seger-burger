@@ -4,10 +4,10 @@ import IProduct from '../../../interfaces/IProduct'
 
 interface IItemProduct {
    product: IProduct
-   handleOrder: (product: IProduct) => void
+   handleAddOrder: (product: IProduct) => void
 }
 
-const ItemProduct: FC<IItemProduct> = ({ handleOrder, product }) => {
+const ItemProduct: FC<IItemProduct> = ({ handleAddOrder, product }) => {
    return (
       <Button
          transition='ease-out .3s'
@@ -19,7 +19,7 @@ const ItemProduct: FC<IItemProduct> = ({ handleOrder, product }) => {
             transform: 'translateY(4px)',
          }}
          whiteSpace='normal'
-         onClick={() => handleOrder(product)}
+         onClick={() => handleAddOrder(product)}
       >
          <Box
             _groupHover={{ backgroundColor: '#ECC94D' }}

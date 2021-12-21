@@ -10,19 +10,17 @@ import ItemProduct from '../../components/Customer/ItemProduct'
 import LogoAll from '../../assets/all.svg'
 import IProduct from '../../interfaces/IProduct'
 
-interface IOrders extends IProduct {}
-
 const Customer: FC<IPage> = () => {
    const [categoryActive, setCategoryActive] = useState<string>('')
    const [search, setSearch] = useState<string>('')
-   const [orders, setOrders] = useState<IOrders[]>([])
+   const [orders, setOrders] = useState<IProduct[]>([])
 
    const { data: dataCategories } = useSWR(`/api/categories`)
    const { data: dataProducts } = useSWR(
       `/api/products?category=${categoryActive}&name=${search}`
    )
 
-   const handleOrder = (product: IOrders) => {
+   const handleAddOrder = (product: IProduct) => {
       // find order
       let exist = false
 
@@ -50,6 +48,34 @@ const Customer: FC<IPage> = () => {
       }
    }
 
+   const handleRemoveOrder = (product: IProduct) => {
+      /**
+       * cari variable order yang id nya sama dengan props
+       * jika ada lakukan condition lagi
+       * jika qty === 1 hapus dari orders
+       * jika tidak qty - 1
+       * push to orders
+       */
+
+      orders.find((order, i) => {
+         if (order._id === product._id) {
+            const newOrders = orders
+
+            if (newOrders[i].qty === 1) {
+               orders.splice(i, 1)
+               setOrders([...orders])
+            } else {
+               newOrders[i].qty -= 1
+               setOrders([...newOrders])
+            }
+
+            return true
+         }
+
+         return false
+      })
+   }
+
    return (
       <Box w='100vw' minH='100vh' bg='gray.50' overflowX='hidden'>
          {/* Navbar */}
@@ -67,6 +93,8 @@ const Customer: FC<IPage> = () => {
          </Box>
 
          <Cart
+            handleAddOrder={handleAddOrder}
+            handleRemoveOrder={handleRemoveOrder}
             orders={orders}
             display={{ base: 'none', md: 'none', lg: 'block' }}
          />
@@ -139,7 +167,7 @@ const Customer: FC<IPage> = () => {
                {dataProducts?.products?.length ? (
                   dataProducts?.products?.map((product: any, i: number) => (
                      <ItemProduct
-                        handleOrder={(product) => handleOrder(product)}
+                        handleAddOrder={(product) => handleAddOrder(product)}
                         key={i}
                         product={product}
                      />

@@ -21,6 +21,7 @@ import {
    Image,
    useToast,
    HStack,
+   Spinner,
 } from '@chakra-ui/react'
 import { Form, Formik } from 'formik'
 import React, { FC, useEffect, useState } from 'react'
@@ -75,7 +76,7 @@ const Product: FC<IPage> = () => {
    const [page, setPage] = useState<number>(1)
    const [searchValue, setSearchValue] = useState<string>('')
 
-   const { data: dataProducts } = useSWR(
+   const { data: dataProducts, error: errorProducts } = useSWR(
       `/api/products?page=${page}&name=${searchValue}`
    )
 
@@ -97,6 +98,7 @@ const Product: FC<IPage> = () => {
          setCategoryOptions(options)
       }
    }, [dataCategories])
+
    const handlePagination = (i: number) => {
       setPage(i)
    }
@@ -300,7 +302,35 @@ const Product: FC<IPage> = () => {
                   </Tr>
                </Thead>
                <Tbody>
-                  {dataProducts?.products?.length ? (
+                  {errorProducts ? (
+                     <Tr>
+                        <Td
+                           colSpan={8}
+                           bg='yellow.300'
+                           color='text'
+                           textAlign='center'
+                        >
+                           Data tidak ditemukan
+                        </Td>
+                     </Tr>
+                  ) : !dataProducts ? (
+                     <Tr>
+                        <Td
+                           colSpan={8}
+                           bg='yellow.300'
+                           color='text'
+                           textAlign='center'
+                        >
+                           <Spinner
+                              thickness='4px'
+                              speed='0.65s'
+                              emptyColor='gray.200'
+                              color='blue.500'
+                              size='md'
+                           />
+                        </Td>
+                     </Tr>
+                  ) : dataProducts?.products?.length ? (
                      dataProducts?.products?.map(
                         (product: IProduct, i: number) => (
                            <Tr key={i}>
@@ -377,7 +407,7 @@ const Product: FC<IPage> = () => {
                   ) : (
                      <Tr>
                         <Td
-                           colSpan={6}
+                           colSpan={8}
                            bg='yellow.300'
                            color='text'
                            textAlign='center'

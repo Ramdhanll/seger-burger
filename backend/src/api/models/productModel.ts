@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose'
 const { ObjectId } = mongoose.Types
 
-interface IProductModel extends Document {
+export interface IProductModel extends Document {
    _id?: string | object // type object for query search in controller
    name: string | object // type object for query search in controller
    photo: string

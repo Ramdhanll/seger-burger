@@ -4,9 +4,15 @@ import IProduct from '../../../../interfaces/IProduct'
 
 interface IItemOrder {
    order: IProduct
+   handleAddOrder: (product: IProduct) => void
+   handleRemoveOrder: (product: IProduct) => void
 }
 
-const ItemOrder: FC<IItemOrder> = ({ order }) => {
+const ItemOrder: FC<IItemOrder> = ({
+   order,
+   handleAddOrder,
+   handleRemoveOrder,
+}) => {
    return (
       <Box
          d='flex'
@@ -17,9 +23,10 @@ const ItemOrder: FC<IItemOrder> = ({ order }) => {
       >
          <HStack spacing={2} alignItems='center' justifyContent='start' w='40%'>
             <Image
-               src='gibbresh.png'
+               src={order.photo}
                fallbackSrc='https://via.placeholder.com/150'
-               w='50px'
+               minW='50px'
+               maxW='50px'
                h='50px'
                borderRadius='md'
             />
@@ -28,14 +35,27 @@ const ItemOrder: FC<IItemOrder> = ({ order }) => {
             </Text>
          </HStack>
 
-         <HStack spacing={3} alignItems='center' justifyContent='start' w='40%'>
-            <Button variant='solid' colorScheme='gray'>
+         <HStack
+            spacing={3}
+            alignItems='center'
+            justifyContent='space-between'
+            w='40%'
+         >
+            <Button
+               variant='solid'
+               colorScheme='gray'
+               onClick={() => handleRemoveOrder(order)}
+            >
                -
             </Button>
-            <Text fontSize={['xs', 'sm']} color='gray.600' fontWeight={400}>
+            <Text fontSize={['xs', 'sm']} color='gray.600' fontWeight={600}>
                {order.qty}
             </Text>
-            <Button variant='solid' colorScheme='gray'>
+            <Button
+               variant='solid'
+               colorScheme='gray'
+               onClick={() => handleAddOrder(order)}
+            >
                +
             </Button>
          </HStack>
@@ -44,9 +64,9 @@ const ItemOrder: FC<IItemOrder> = ({ order }) => {
             textAlign='right'
             fontSize={['xs', 'sm']}
             fontWeight={500}
-            w='10%'
+            w='20%'
          >
-            32K
+            {order.price * order.qty} K
          </Text>
       </Box>
    )
