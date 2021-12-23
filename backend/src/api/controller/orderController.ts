@@ -92,7 +92,6 @@ export const deleteOrder = async (req: Request, res: Response) => {
    try {
       logging.info(`Incoming delete for ${_id}`)
 
-      await Products.deleteMany({ order: _id })
       await Orders.deleteOne({ _id })
 
       logging.info('Order deleted successfully')

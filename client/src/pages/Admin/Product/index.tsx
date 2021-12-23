@@ -213,6 +213,8 @@ const Product: FC<IPage> = () => {
       onOpenPreviewPhoto()
    }
 
+   // Section Delete
+
    const {
       isOpen: isOpenAlertDelete,
       onOpen: onOpenAlertDelete,

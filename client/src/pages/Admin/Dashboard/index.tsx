@@ -15,7 +15,8 @@ const Dashboard: FC<IDashboard> = () => {
          <Flex
             gridGap={{ base: 3, md: 5 }}
             mt={5}
-            flexDirection={{ base: 'column', md: 'row' }}
+            // flexDirection={{ base: 'column', md: 'row' }}
+            flexDirection={['column', 'column', 'column', 'row']}
             justifyContent='center'
             alignItems='center'
          >
