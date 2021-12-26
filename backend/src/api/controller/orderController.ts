@@ -7,6 +7,19 @@ import Orders from '../models/orderModel'
 import customId from '../helpers/customId'
 dotenv.config()
 
+export const getOrder = async (req: Request, res: Response) => {
+   logging.info('Incoming get order')
+
+   try {
+      const order = await Orders.findById(req.params.id)
+      if (!order) throw new Error('Order not found')
+
+      res.status(200).json({ order })
+   } catch (error) {
+      res.status(500).json({ message: 'Server down!', error })
+   }
+}
+
 export const getOrders = async (req: Request, res: Response) => {
    logging.info(`Incoming get orders`)
 
@@ -98,6 +111,55 @@ export const deleteOrder = async (req: Request, res: Response) => {
       return res.status(200).json({ message: 'Order deleted successfully' })
    } catch (error) {
       logging.error('Order failed to delete')
+      return res.status(500).json({ error })
+   }
+}
+
+export const order = async (req: Request, res: Response) => {
+   const _id = req.params.id
+   const { orders } = req.body
+
+   try {
+      const order = await Orders.findById(_id)
+      if (!order) throw new Error('Order not found')
+
+      // lakukan perulangan pada order baru
+      for (let i = 0; i < orders.length; i++) {
+         let isExist = false
+
+         // cek order lama ( yang ada di db ) dengan order baru
+         // jika ada tambah qty nya dan rubah variable isExist menjadi true
+
+         for (let j = 0; j < order.orders.length; j++) {
+            if (orders[i]._id === order.orders[j].product.toString()) {
+               order.orders[j].qty = orders[i].qty + order.orders[j].qty
+               isExist = true
+
+               // jika sudah ketemua lakukan break, dan perulangan berhenti
+               break
+            }
+         }
+
+         // jika tidak ada yang sama, tambahkan order baru, ke db
+         if (!isExist) {
+            order.orders.push({
+               product: orders[i]._id,
+               qty: orders[i].qty,
+            })
+         }
+      }
+
+      const total = orders.reduce(
+         (total: number, num: any) => total + num.price * num.qty,
+         0
+      )
+
+      order.total = order.total + total
+      order.status = 'COOKED'
+
+      const updatedOrder = await order.save()
+      return res.status(200).json({ message: 'success', order: updatedOrder })
+   } catch (error) {
       return res.status(500).json({ error })
    }
 }

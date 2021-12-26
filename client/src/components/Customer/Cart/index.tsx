@@ -5,17 +5,21 @@ import IProduct from '../../../interfaces/IProduct'
 import ItemOrder from './ItemOrder'
 
 interface ICart {
-   orders: IProduct[]
+   orderItems: IProduct[]
    display: any
+   totalOrder: number
    handleAddOrder: (product: IProduct) => void
    handleRemoveOrder: (product: IProduct) => void
+   handleCheckoutOrder: () => void
 }
 
 const Cart: FC<ICart> = ({
-   orders,
+   orderItems,
    display,
+   totalOrder,
    handleAddOrder,
    handleRemoveOrder,
+   handleCheckoutOrder,
 }) => {
    return (
       <Box
@@ -53,7 +57,7 @@ const Cart: FC<ICart> = ({
                },
             }}
          >
-            {orders.map((order, i) => (
+            {orderItems.map((order, i) => (
                <ItemOrder
                   key={i}
                   order={order}
@@ -69,11 +73,7 @@ const Cart: FC<ICart> = ({
                   Subtotal
                </Text>
                <Text fontWeight='500' fontSize={['xs', 'sm']}>
-                  {orders.reduce(
-                     (total, num) => total + num.price * num.qty,
-                     0
-                  )}
-                  K
+                  {totalOrder} K
                </Text>
             </HStack>
             <hr
@@ -88,11 +88,7 @@ const Cart: FC<ICart> = ({
                   Total
                </Text>
                <Text fontWeight='500' fontSize={['xs', 'sm', 'lg']}>
-                  {orders.reduce(
-                     (total, num) => total + num.price * num.qty,
-                     0
-                  )}{' '}
-                  K
+                  {totalOrder} K
                </Text>
             </HStack>
 
@@ -105,6 +101,7 @@ const Cart: FC<ICart> = ({
                   _hover={{ backgroundColor: 'yellow.400' }}
                   _focus={{ outline: 'none' }}
                   _active={{ backgroundColor: 'yellow.500' }}
+                  onClick={handleCheckoutOrder}
                >
                   Order
                </Button>

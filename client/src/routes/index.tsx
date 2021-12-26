@@ -9,6 +9,7 @@ import NotFound from '../pages/NotFound'
 import Register from '../pages/Register'
 import Customer from '../pages/Customer'
 import Category from '../pages/Admin/Category'
+import IdOrderNotFound from '../pages/IdOrderNotFound'
 
 const authRoutes: IRoute[] = [
    {
@@ -59,6 +60,11 @@ const customerRoutes: IRoute[] = [
       path: '/order/:id',
       auth: false,
       element: <Customer />,
+   },
+   {
+      path: '/order/not-found',
+      auth: false,
+      element: <IdOrderNotFound />,
    },
 ]
 

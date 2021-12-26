@@ -2,6 +2,20 @@ import axios from 'axios'
 import config from '../config/config'
 import logging from '../config/logging'
 
+const isExist = async (id: any) => {
+   logging.info(`Check id order`)
+
+   try {
+      const { data } = await axios.get(`${config.server.url}/api/orders/${id}`)
+      logging.info(`id order exist`)
+
+      return data
+   } catch (error) {
+      logging.error(error)
+      throw error
+   }
+}
+
 const Create = async () => {
    logging.info('Creating order...')
 
@@ -45,10 +59,23 @@ const Delete = async (id: any) => {
    }
 }
 
+const order = async (id: any, values: any) => {
+   try {
+      const { data } = await axios.put(`/api/orders/${id}/order`, {
+         orders: values,
+      })
+      return data
+   } catch (error) {
+      throw error
+   }
+}
+
 const OrderService = {
    Delete,
    Create,
    Update,
+   isExist,
+   order,
 }
 
 export default OrderService

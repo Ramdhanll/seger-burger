@@ -1,5 +1,5 @@
-import { Box, Flex, HStack, Image, Text } from '@chakra-ui/react'
-import React, { FC, useState } from 'react'
+import { Box, Flex, HStack, Image, Text, useToast } from '@chakra-ui/react'
+import React, { FC, useEffect, useState } from 'react'
 import IPage from '../../interfaces/IPage'
 import Logo from '../../assets/logo.png'
 import Search from '../../components/Search'
@@ -9,11 +9,29 @@ import ItemCategory from '../../components/Customer/ItemCategory'
 import ItemProduct from '../../components/Customer/ItemProduct'
 import LogoAll from '../../assets/all.svg'
 import IProduct from '../../interfaces/IProduct'
+import { useNavigate, useParams } from 'react-router-dom'
+import OrderService from '../../services/order'
 
-const Customer: FC<IPage> = () => {
+const Customer: FC<IPage> = (props) => {
+   const { id } = useParams()
+   const navigate = useNavigate()
+   const toast = useToast()
+
+   useEffect(() => {
+      const handleCheckOrderIsExist = async (id: any) => {
+         try {
+            await OrderService.isExist(id)
+         } catch (error) {
+            navigate('/order/not-found')
+         }
+      }
+
+      handleCheckOrderIsExist(id)
+   }, [id, navigate])
+
    const [categoryActive, setCategoryActive] = useState<string>('')
    const [search, setSearch] = useState<string>('')
-   const [orders, setOrders] = useState<IProduct[]>([])
+   const [orderItems, setOrderItems] = useState<IProduct[]>([])
 
    const { data: dataCategories } = useSWR(`/api/categories`)
    const { data: dataProducts } = useSWR(
@@ -27,14 +45,14 @@ const Customer: FC<IPage> = () => {
       /**
        * cari variable order yang id nya sama dengan props
        * jika ada replace qty + 1
-       * jika tidak push props to orders
+       * jika tidak push props to orderItems
        */
 
-      orders.find((order, i) => {
+      orderItems.find((order, i) => {
          if (order._id === product._id) {
-            const newOrders = orders
+            const newOrders = orderItems
             newOrders[i].qty += 1
-            setOrders([...newOrders])
+            setOrderItems([...newOrders])
             exist = true
             return true
          }
@@ -44,7 +62,7 @@ const Customer: FC<IPage> = () => {
 
       if (!exist) {
          product.qty = 1
-         setOrders([...orders, product])
+         setOrderItems([...orderItems, product])
       }
    }
 
@@ -52,21 +70,21 @@ const Customer: FC<IPage> = () => {
       /**
        * cari variable order yang id nya sama dengan props
        * jika ada lakukan condition lagi
-       * jika qty === 1 hapus dari orders
+       * jika qty === 1 hapus dari orderItems
        * jika tidak qty - 1
-       * push to orders
+       * push to orderItems
        */
 
-      orders.find((order, i) => {
+      orderItems.find((order, i) => {
          if (order._id === product._id) {
-            const newOrders = orders
+            const newOrders = orderItems
 
             if (newOrders[i].qty === 1) {
-               orders.splice(i, 1)
-               setOrders([...orders])
+               orderItems.splice(i, 1)
+               setOrderItems([...orderItems])
             } else {
                newOrders[i].qty -= 1
-               setOrders([...newOrders])
+               setOrderItems([...newOrders])
             }
 
             return true
@@ -74,6 +92,35 @@ const Customer: FC<IPage> = () => {
 
          return false
       })
+   }
+
+   const totalOrder = () => {
+      return orderItems.reduce((total, num) => total + num.price * num.qty, 0)
+   }
+
+   const handleCheckoutOrder = async () => {
+      try {
+         const res = await OrderService.order(id, orderItems)
+         console.log('res', res)
+         setOrderItems([])
+         toast({
+            title: 'Success',
+            description: 'order will be made',
+            status: 'success',
+            duration: 5000,
+            isClosable: true,
+            position: 'top-right',
+         })
+      } catch (error) {
+         toast({
+            title: 'Failed',
+            description: 'Order failed',
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+            position: 'top-right',
+         })
+      }
    }
 
    return (
@@ -93,9 +140,11 @@ const Customer: FC<IPage> = () => {
          </Box>
 
          <Cart
+            totalOrder={totalOrder()}
+            handleCheckoutOrder={handleCheckoutOrder}
             handleAddOrder={handleAddOrder}
             handleRemoveOrder={handleRemoveOrder}
-            orders={orders}
+            orderItems={orderItems}
             display={{ base: 'none', md: 'none', lg: 'block' }}
          />
 

@@ -10,7 +10,7 @@ interface IOrderModel extends Document {
    orders: {
       product: IProductModel
       qty: number
-   }
+   }[]
    total: number
    status: 'WAITING' | 'COOKED' | 'DELIVERED' | 'COMPLETED'
 }

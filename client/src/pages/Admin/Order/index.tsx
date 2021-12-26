@@ -188,11 +188,11 @@ const Order: FC<IPage> = () => {
                <Tbody>
                   {errorOrders ? (
                      <TableDateNotFound
-                        colSpan={3}
+                        colSpan={5}
                         message='Data tidak ditemukan'
                      />
                   ) : !dataOrders ? (
-                     <TableLoading colSpan={8} />
+                     <TableLoading colSpan={5} />
                   ) : dataOrders?.orders?.length ? (
                      dataOrders?.orders?.map((order: IOrder, i: number) => (
                         <Tr key={i}>
@@ -236,7 +236,7 @@ const Order: FC<IPage> = () => {
                      ))
                   ) : (
                      <TableDateNotFound
-                        colSpan={3}
+                        colSpan={5}
                         message='Data tidak ditemukan'
                      />
                   )}
