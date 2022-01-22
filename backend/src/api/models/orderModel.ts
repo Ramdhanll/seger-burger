@@ -4,12 +4,14 @@ import { IProductModel } from './productModel'
 
 const { ObjectId } = mongoose.Types
 
-interface IOrderModel extends Document {
+export interface IOrderModel extends Document {
    _id: string
    link: string
    orders: {
       product: IProductModel
       qty: number
+      status?: 'COOKED' | 'DELIVERED'
+      createdAt?: Date
    }[]
    total: number
    status: 'WAITING' | 'COOKED' | 'DELIVERED' | 'COMPLETED'
@@ -25,17 +27,7 @@ const OrderSchema = new Schema<IOrderModel>(
          type: String,
          required: true,
       },
-      orders: [
-         {
-            product: {
-               type: ObjectId,
-               ref: 'products',
-            },
-            qty: {
-               type: Number,
-            },
-         },
-      ],
+      orders: [{ type: ObjectId, ref: 'ListsOrder' }],
       total: {
          type: Number,
          default: 0,

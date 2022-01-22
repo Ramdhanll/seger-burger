@@ -10,35 +10,12 @@ import {
    productRouter,
    categoryRouter,
    orderRouter,
-} from './api/routes/'
-import path from 'path'
-const __dirname = path.resolve()
+} from './api/routes'
 import dotenv from 'dotenv'
+import createServer from './api/helpers/server'
 dotenv.config()
 
-const app = express()
-
-// Middleware
-app.use(
-   cors({
-      credentials: true,
-      // origin: ['*', 'http://localhost:3000', 'http://localhost'],
-      origin: 'http://localhost:3000',
-   })
-)
-app.use(
-   '/uploads',
-   express.static(path.join(__dirname, '/src/uploads/products'))
-)
-
-app.use(
-   '/uploads',
-   express.static(path.join(__dirname, '/src/uploads/categories'))
-)
-
-app.use(cookieParser())
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+const app = createServer()
 
 // Connect to Mongo
 mongoose
@@ -63,22 +40,6 @@ app.use((req, res, next) => {
    })
 
    next()
-})
-
-// Routes
-app.use('/api/auth', authRouter)
-app.use('/api/users', userRouter)
-app.use('/api/products', productRouter)
-app.use('/api/categories', categoryRouter)
-app.use('/api/orders', orderRouter)
-
-// Error Handling
-app.use((req, res, next) => {
-   const error = new Error('not found')
-
-   return res.status(404).json({
-      message: error.message,
-   })
 })
 
 // Listen for request

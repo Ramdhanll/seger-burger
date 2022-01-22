@@ -23,7 +23,7 @@ export default function IdOrderNotFound() {
          </Text>
 
          <Button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/')}
             colorScheme='yellow'
             bgGradient='linear(to-r, yellow.400, yellow.500, yellow.600)'
             color='white'

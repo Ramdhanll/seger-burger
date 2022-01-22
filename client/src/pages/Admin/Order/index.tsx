@@ -20,6 +20,8 @@ import {
    ModalBody,
    ModalFooter,
    Link,
+   VStack,
+   Image,
 } from '@chakra-ui/react'
 import React, { FC, useRef, useState } from 'react'
 import Heading from '../../../components/Admin/Heading'
@@ -27,8 +29,10 @@ import Pagination from '../../../components/Pagination'
 import Search from '../../../components/Search'
 import IPage from '../../../interfaces/IPage'
 import useSWR, { mutate } from 'swr'
-import { MdDelete } from 'react-icons/md'
-import { IoMdBarcode } from 'react-icons/io'
+import { MdDelete, MdPrint } from 'react-icons/md'
+import { IoMdBarcode, IoMdEye } from 'react-icons/io'
+import { FaTelegramPlane } from 'react-icons/fa'
+import { FcMoneyTransfer } from 'react-icons/fc'
 import TableDateNotFound from '../../../components/Table/TableDataNotFound'
 import TableLoading from '../../../components/Table/TableLoading'
 import StatusOrder from '../../../components/StatusOrder'
@@ -38,6 +42,8 @@ import IOrder, { INITIAL_ORDER } from '../../../interfaces/IOrder'
 import QRCode from 'react-qr-code'
 import PrintBarcode from '../../../components/PrintBarcode'
 import { useReactToPrint } from 'react-to-print'
+import PrintMenu from '../../../components/PrintMenu'
+import ModalBodyPayment from '../../../components/ModalBodyPayment'
 
 const Order: FC<IPage> = () => {
    const toast = useToast()
@@ -47,10 +53,14 @@ const Order: FC<IPage> = () => {
    const [searchValue, setSearchValue] = useState<string>('')
    const [btnNewOrderIsLoading, setBtnNewOrderIsLoading] = useState(false)
    const barcodeRef = useRef(null)
+   const [menuSelected, setMenuSelected] = useState({})
+   const menuRef = useRef(null)
 
    const { data: dataOrders, error: errorOrders } = useSWR(
       `/api/orders?page=${page}&id=${searchValue}`
    )
+
+   console.log('DATA', dataOrders)
 
    const handlePagination = (i: number) => {
       setPage(i)
@@ -84,6 +94,18 @@ const Order: FC<IPage> = () => {
             position: 'top-right',
          })
       }
+   }
+
+   // Section Detail
+   const {
+      isOpen: isOpenDetail,
+      onOpen: onOpenDetail,
+      onClose: onCloseDetail,
+   } = useDisclosure()
+
+   const handleOpenDetail = (order: IOrder) => {
+      setOrderSelected(order)
+      onOpenDetail()
    }
 
    // Section Barcode
@@ -139,6 +161,7 @@ const Order: FC<IPage> = () => {
 
    const cleanForm = () => {
       setOrderSelected(INITIAL_ORDER)
+      console.log('SELECTED ORDER', orderSelected)
    }
 
    // Print barcode
@@ -146,6 +169,90 @@ const Order: FC<IPage> = () => {
       content: () => barcodeRef.current,
       pageStyle: pageStyle,
    })
+
+   const renderTimeOrder = (order: any) => {
+      const time = new Date(order)
+      const hour =
+         time.getHours() < 10 ? `0${time.getHours()}` : time.getHours()
+      const minute =
+         time.getMinutes() < 10 ? `0${time.getMinutes()}` : time.getMinutes()
+
+      return `${hour} : ${minute}`
+   }
+
+   // print menu
+   const submitPrintMenu = (orders: any) => {
+      setMenuSelected(orders)
+
+      setTimeout(() => {
+         handlePrintMenu()
+      }, 1000)
+   }
+
+   console.log('dataOrders', dataOrders)
+   console.log('selectedOrder', orderSelected)
+
+   const handlePrintMenu = useReactToPrint({
+      content: () => menuRef.current,
+      pageStyle: pageStyle,
+   })
+
+   const handleOrderDelivered = async ({
+      order_id,
+      order_list_id,
+   }: {
+      order_id: any
+      order_list_id: string
+   }) => {
+      try {
+         const { order } = await OrderService.OrderDelivered(
+            order_id,
+            order_list_id
+         )
+
+         setOrderSelected(order)
+
+         mutate(`/api/orders?page=${page}&id=${searchValue}`)
+
+         // const indexOrder = dataOrders.orders.findIndex(
+         //    (order: any) => order._id === orderSelected._id
+         // )
+
+         // setOrderSelected(dataOrders[indexOrder])
+
+         toast({
+            title: 'Success',
+            description: 'Order delivered successfully',
+            status: 'success',
+            duration: 5000,
+            isClosable: true,
+            position: 'top-right',
+         })
+      } catch (error) {
+         setBtnNewOrderIsLoading(false)
+
+         toast({
+            title: 'Failed',
+            description: 'Order delivered failed',
+            status: 'error',
+            duration: 5000,
+            isClosable: true,
+            position: 'top-right',
+         })
+      }
+   }
+
+   // Section payment
+   const {
+      isOpen: isOpenPayment,
+      onOpen: onOpenPayment,
+      onClose: onClosePayment,
+   } = useDisclosure()
+
+   const handleOpenPayment = (order: IOrder) => {
+      setOrderSelected(order)
+      onOpenPayment()
+   }
 
    return (
       <Box textAlign='left' py={3} bg='white' alignItems='center'>
@@ -218,10 +325,24 @@ const Order: FC<IPage> = () => {
                               <HStack spacing={3}>
                                  <Button
                                     variant='solid'
+                                    colorScheme='blue'
+                                    onClick={() => handleOpenDetail(order)}
+                                 >
+                                    <IoMdEye size='16px' />
+                                 </Button>
+                                 <Button
+                                    variant='outline'
                                     colorScheme='cyan'
                                     onClick={() => handleOpenBarcode(order)}
                                  >
                                     <IoMdBarcode size='16px' />
+                                 </Button>
+                                 <Button
+                                    variant='solid'
+                                    colorScheme='teal'
+                                    onClick={() => handleOpenPayment(order)}
+                                 >
+                                    <FcMoneyTransfer size='16px' />
                                  </Button>
                                  <Button
                                     variant='outline'
@@ -251,6 +372,186 @@ const Order: FC<IPage> = () => {
                handlePagination={(e) => handlePagination(e)}
             />
          </Box>
+
+         {/* Modal Detail */}
+         <Modal
+            isOpen={isOpenDetail}
+            onClose={onCloseDetail}
+            onOverlayClick={cleanForm}
+            size='lg'
+         >
+            <ModalOverlay />
+            <ModalContent>
+               <ModalHeader>Order ID: {orderSelected._id}</ModalHeader>
+               <ModalCloseButton _focus={{ outline: 'none' }} />
+               <ModalBody>
+                  <Box
+                     d='flex'
+                     alignItems='center'
+                     justifyContent='center'
+                     flexDirection='column'
+                     gridGap={3}
+                  >
+                     <VStack
+                        pr={3}
+                        spacing={3}
+                        mt='30px'
+                        maxH={60}
+                        overflowY='auto'
+                        css={{
+                           '&::-webkit-scrollbar': {
+                              width: '4px',
+                           },
+                           '&::-webkit-scrollbar-track': {
+                              width: '6px',
+                           },
+                           '&::-webkit-scrollbar-thumb': {
+                              backgroundColor: 'gray',
+                              borderRadius: '24px',
+                           },
+                        }}
+                     >
+                        {orderSelected.orders.map((order: any, i: number) => {
+                           return (
+                              <Box w='full' key={i}>
+                                 <Flex
+                                    alignItems='end'
+                                    justifyContent='end'
+                                    gridGap={3}
+                                 >
+                                    <Text textAlign='right'>
+                                       Orders at{' '}
+                                       {new Date(
+                                          order.createdAt
+                                       ).toLocaleDateString('id', {
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                       })}
+                                    </Text>
+                                    <Button
+                                       size='xs'
+                                       variant='solid'
+                                       colorScheme='green'
+                                       onClick={() => submitPrintMenu(order)}
+                                    >
+                                       <MdPrint size='16px' />
+                                    </Button>
+                                 </Flex>
+
+                                 {order.lists.map((order: any, i: number) => (
+                                    <Box
+                                       d='flex'
+                                       justifyContent='space-between'
+                                       alignItems='center'
+                                       gridGap={4}
+                                       w='100%'
+                                       key={i}
+                                    >
+                                       <HStack
+                                          spacing={2}
+                                          alignItems='center'
+                                          justifyContent='start'
+                                          w='40%'
+                                       >
+                                          <Image
+                                             src={order.product.photo}
+                                             fallbackSrc='https://via.placeholder.com/150'
+                                             minW='50px'
+                                             maxW='50px'
+                                             h='50px'
+                                             borderRadius='md'
+                                          />
+                                          <Text
+                                             fontSize={['xs', 'sm']}
+                                             color='gray.600'
+                                             fontWeight={400}
+                                          >
+                                             {order.product.name}
+                                          </Text>
+                                       </HStack>
+
+                                       <Text
+                                          textAlign='right'
+                                          fontSize={['xs', 'sm']}
+                                          fontWeight={500}
+                                          w='20%'
+                                       >
+                                          {order.qty} pcs
+                                       </Text>
+
+                                       <Text
+                                          textAlign='right'
+                                          fontSize={['xs', 'sm']}
+                                          fontWeight={500}
+                                          w='20%'
+                                       >
+                                          {order.product.price * order.qty} K
+                                       </Text>
+
+                                       <Text
+                                          textAlign='right'
+                                          fontSize={['xs', 'sm']}
+                                          fontWeight={500}
+                                          w='20%'
+                                       >
+                                          {renderTimeOrder(
+                                             order.product.createdAt
+                                          )}
+                                       </Text>
+
+                                       <StatusOrder status={order.status} />
+                                       {order.status !== 'DELIVERED' && (
+                                          <Button
+                                             size='xs'
+                                             variant='solid'
+                                             colorScheme='telegram'
+                                             onClick={() =>
+                                                handleOrderDelivered({
+                                                   order_id: orderSelected._id,
+                                                   order_list_id: order._id,
+                                                })
+                                             }
+                                          >
+                                             <FaTelegramPlane size='16px' />
+                                          </Button>
+                                       )}
+                                    </Box>
+                                 ))}
+                              </Box>
+                           )
+                        })}
+                     </VStack>
+                  </Box>
+
+                  <Box mt='30px'>
+                     <HStack justifyContent='space-between'>
+                        <Text fontWeight='500' fontSize={['xs', 'sm']}>
+                           Subtotal
+                        </Text>
+                        <Text fontWeight='500' fontSize={['xs', 'sm']}>
+                           {orderSelected.total} K
+                        </Text>
+                     </HStack>
+                     <hr
+                        style={{
+                           borderTop: '1px dashed gray',
+                           marginTop: '15px',
+                           marginBottom: '15px',
+                        }}
+                     />
+                     <HStack justifyContent='space-between'>
+                        <Text fontWeight='500' fontSize={['xs', 'sm']}>
+                           Total
+                        </Text>
+                        <Text fontWeight='500' fontSize={['xs', 'sm', 'lg']}>
+                           {orderSelected.total} K
+                        </Text>
+                     </HStack>
+                  </Box>
+               </ModalBody>
+               <ModalFooter></ModalFooter>
+            </ModalContent>
+         </Modal>
 
          {/* Modal Barcode */}
          <Modal
@@ -289,6 +590,30 @@ const Order: FC<IPage> = () => {
             </ModalContent>
          </Modal>
 
+         {/* Modal Payment */}
+         <Modal
+            isOpen={isOpenPayment}
+            onClose={onClosePayment}
+            onOverlayClick={cleanForm}
+            size='sm'
+         >
+            <ModalOverlay />
+            <ModalContent>
+               <ModalHeader>
+                  <Text color='gray.500' fontSize='lg'>
+                     Payment
+                  </Text>
+                  <Text color='gray.400' fontSize='md' fontWeight='400'>
+                     Order ID: {orderSelected._id}
+                  </Text>
+               </ModalHeader>
+               <ModalCloseButton _focus={{ outline: 'none' }} />
+               <ModalBody>
+                  <ModalBodyPayment order={orderSelected} />
+               </ModalBody>
+            </ModalContent>
+         </Modal>
+
          {/* Alert delete order */}
          <AlertDialogDelete
             header='Delete Order'
@@ -303,6 +628,12 @@ const Order: FC<IPage> = () => {
          <Box display='none'>
             <Box ref={barcodeRef}>
                <PrintBarcode order={orderSelected} />
+            </Box>
+         </Box>
+
+         <Box display='none'>
+            <Box ref={menuRef}>
+               <PrintMenu orders={menuSelected} />
             </Box>
          </Box>
       </Box>

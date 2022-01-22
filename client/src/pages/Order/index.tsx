@@ -12,11 +12,12 @@ import IProduct from '../../interfaces/IProduct'
 import { useNavigate, useParams } from 'react-router-dom'
 import OrderService from '../../services/order'
 
-const Customer: FC<IPage> = (props) => {
+const Order: FC<IPage> = (props) => {
    const { id } = useParams()
    const navigate = useNavigate()
    const toast = useToast()
 
+   // Handle ID Order exist or not
    useEffect(() => {
       const handleCheckOrderIsExist = async (id: any) => {
          try {
@@ -100,8 +101,7 @@ const Customer: FC<IPage> = (props) => {
 
    const handleCheckoutOrder = async () => {
       try {
-         const res = await OrderService.order(id, orderItems)
-         console.log('res', res)
+         await OrderService.order(id, orderItems)
          setOrderItems([])
          toast({
             title: 'Success',
@@ -140,6 +140,7 @@ const Customer: FC<IPage> = (props) => {
          </Box>
 
          <Cart
+            orderId={id}
             totalOrder={totalOrder()}
             handleCheckoutOrder={handleCheckoutOrder}
             handleAddOrder={handleAddOrder}
@@ -230,4 +231,4 @@ const Customer: FC<IPage> = (props) => {
    )
 }
 
-export default Customer
+export default Order

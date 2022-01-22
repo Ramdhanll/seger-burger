@@ -5,6 +5,7 @@ import IProduct from '../../../interfaces/IProduct'
 import ItemOrder from './ItemOrder'
 
 interface ICart {
+   orderId: any
    orderItems: IProduct[]
    display: any
    totalOrder: number
@@ -14,6 +15,7 @@ interface ICart {
 }
 
 const Cart: FC<ICart> = ({
+   orderId,
    orderItems,
    display,
    totalOrder,
@@ -107,7 +109,7 @@ const Cart: FC<ICart> = ({
                </Button>
             </Box>
             <Box mt={3}>
-               <Link as={NavLink} to='/order/qweqwe/transactions'>
+               <Link as={NavLink} to={`/order/${orderId}/purchase`}>
                   <Text
                      color='linkedin.700'
                      fontWeight={300}

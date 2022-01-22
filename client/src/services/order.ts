@@ -70,12 +70,24 @@ const order = async (id: any, values: any) => {
    }
 }
 
+const OrderDelivered = async (orderId: any, listOrderId: any) => {
+   try {
+      const { data } = await axios.put(
+         `/api/orders/${orderId}/delivered/${listOrderId}`
+      )
+      return data
+   } catch (error) {
+      throw error
+   }
+}
+
 const OrderService = {
    Delete,
    Create,
    Update,
    isExist,
    order,
+   OrderDelivered,
 }
 
 export default OrderService

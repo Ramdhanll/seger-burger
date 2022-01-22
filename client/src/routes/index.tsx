@@ -7,9 +7,10 @@ import Home from '../pages/Home'
 import Login from '../pages/Login'
 import NotFound from '../pages/NotFound'
 import Register from '../pages/Register'
-import Customer from '../pages/Customer'
+import Customer from '../pages/Order'
 import Category from '../pages/Admin/Category'
 import IdOrderNotFound from '../pages/IdOrderNotFound'
+import Purchase from '../pages/Order/Purchase'
 
 const authRoutes: IRoute[] = [
    {
@@ -55,11 +56,16 @@ const adminRoutes: IRoute[] = [
    },
 ]
 
-const customerRoutes: IRoute[] = [
+const orderRoutes: IRoute[] = [
    {
       path: '/order/:id',
       auth: false,
       element: <Customer />,
+   },
+   {
+      path: '/order/:id/purchase',
+      auth: false,
+      element: <Purchase />,
    },
    {
       path: '/order/not-found',
@@ -87,7 +93,7 @@ const routes: IRoute[] = [
    ...authRoutes,
    ...mainRoutes,
    ...adminRoutes,
-   ...customerRoutes,
+   ...orderRoutes,
    ...notFoundRoutes,
 ]
 

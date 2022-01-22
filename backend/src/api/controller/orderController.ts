@@ -5,14 +5,19 @@ import dotenv from 'dotenv'
 import Products from '../models/productModel'
 import Orders from '../models/orderModel'
 import customId from '../helpers/customId'
+import ListOrder, { IListOrder } from '../models/listOrderModel'
 dotenv.config()
 
 export const getOrder = async (req: Request, res: Response) => {
    logging.info('Incoming get order')
 
    try {
-      const order = await Orders.findById(req.params.id)
-      if (!order) throw new Error('Order not found')
+      const order = await Orders.findById(req.params.id).populate({
+         path: 'orders',
+         populate: { path: 'lists.product' },
+      })
+
+      if (!order) return res.status(404).json({ message: 'Order not found' })
 
       res.status(200).json({ order })
    } catch (error) {
@@ -39,8 +44,8 @@ export const getOrders = async (req: Request, res: Response) => {
       const orders = await Orders.find({
          ..._idFilter,
       })
+         .populate({ path: 'orders', populate: { path: 'lists.product' } })
          .sort('-createdAt')
-         .select('-password')
          .skip(pageSize * (page - 1))
          .limit(pageSize)
 
@@ -50,6 +55,7 @@ export const getOrders = async (req: Request, res: Response) => {
          pages: Math.ceil(count / pageSize),
       })
    } catch (error) {
+      logging.error(error)
       res.status(500).json({ message: 'Server down!', error })
    }
 }
@@ -115,51 +121,110 @@ export const deleteOrder = async (req: Request, res: Response) => {
    }
 }
 
-export const order = async (req: Request, res: Response) => {
+export const orderMenu = async (req: Request, res: Response) => {
    const _id = req.params.id
    const { orders } = req.body
+   const lists = []
 
    try {
       const order = await Orders.findById(_id)
       if (!order) throw new Error('Order not found')
 
       // lakukan perulangan pada order baru
+      // for (let i = 0; i < orders.length; i++) {
+      //    let isExist = false
+
+      //    // cek order lama ( yang ada di db ) dengan order baru
+      //    // jika ada tambah qty nya dan rubah variable isExist menjadi true
+
+      //    for (let j = 0; j < order.orders.length; j++) {
+      //       if (orders[i]._id === order.orders[j].product.toString()) {
+      //          order.orders[j].qty = orders[i].qty + order.orders[j].qty
+      //          isExist = true
+
+      //          // jika sudah ketemua lakukan break, dan perulangan berhenti
+      //          break
+      //       }
+      //    }
+
+      //    // jika tidak ada yang sama, tambahkan order baru, ke db
+      //    if (!isExist) {
+      //       order.orders.push({
+      //          product: orders[i]._id,
+      //          qty: orders[i].qty,
+      //       })
+      //    }
+      // }
+
       for (let i = 0; i < orders.length; i++) {
-         let isExist = false
-
-         // cek order lama ( yang ada di db ) dengan order baru
-         // jika ada tambah qty nya dan rubah variable isExist menjadi true
-
-         for (let j = 0; j < order.orders.length; j++) {
-            if (orders[i]._id === order.orders[j].product.toString()) {
-               order.orders[j].qty = orders[i].qty + order.orders[j].qty
-               isExist = true
-
-               // jika sudah ketemua lakukan break, dan perulangan berhenti
-               break
-            }
-         }
-
-         // jika tidak ada yang sama, tambahkan order baru, ke db
-         if (!isExist) {
-            order.orders.push({
-               product: orders[i]._id,
-               qty: orders[i].qty,
-            })
-         }
+         lists.push({
+            product: orders[i]._id,
+            qty: orders[i].qty,
+         })
       }
+
+      const createListOrder = new ListOrder({ order: order._id, lists })
+      const createdListOrder = await createListOrder.save()
 
       const total = orders.reduce(
          (total: number, num: any) => total + num.price * num.qty,
          0
       )
 
+      order.orders.push(createdListOrder._id)
       order.total = order.total + total
       order.status = 'COOKED'
 
       const updatedOrder = await order.save()
       return res.status(200).json({ message: 'success', order: updatedOrder })
    } catch (error) {
+      logging.error(error)
+      return res.status(500).json({ error })
+   }
+}
+
+export const orderDelivered = async (req: Request, res: Response) => {
+   logging.info('Incoming order delivered')
+   const order_id = req.params.id
+   const order_list_id = req.params.order_list_id
+
+   try {
+      const orders = await ListOrder.find({ order: order_id })
+      if (!orders) res.status(404).json({ message: 'Order list not found' })
+
+      let indexOrder = null
+      let indexList = null
+
+      for (let i = 0; i < orders.length; i++) {
+         const index = orders[i].lists.findIndex(
+            (list) => list._id?.toString() === order_list_id
+         )
+         if (index > -1) {
+            indexOrder = i
+            indexList = index
+
+            break
+         }
+      }
+
+      if (indexOrder !== null && indexList !== null) {
+         orders[indexOrder].lists[indexList].status = 'DELIVERED'
+
+         try {
+            const updatedOrders = await orders[indexOrder].save()
+            const order = await Orders.findById(updatedOrders.order).populate({
+               path: 'orders',
+               populate: { path: 'lists.product' },
+            })
+            return res.status(200).json({ order })
+         } catch (error) {
+            return res.status(404).json({ message: 'Order not found' })
+         }
+      }
+
+      return res.status(404).json({ message: 'Order not found' })
+   } catch (error) {
+      logging.error(error)
       return res.status(500).json({ error })
    }
 }
