@@ -11,6 +11,7 @@ import Customer from '../pages/Order'
 import Category from '../pages/Admin/Category'
 import IdOrderNotFound from '../pages/IdOrderNotFound'
 import Purchase from '../pages/Order/Purchase'
+import Report from '../pages/Admin/Report'
 
 const authRoutes: IRoute[] = [
    {
@@ -50,6 +51,11 @@ const adminRoutes: IRoute[] = [
          {
             path: 'category',
             element: <Category />,
+            auth: true,
+         },
+         {
+            path: 'report',
+            element: <Report />,
             auth: true,
          },
       ],

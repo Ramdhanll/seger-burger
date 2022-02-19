@@ -37,6 +37,7 @@ import {
    FiBell,
    FiChevronDown,
 } from 'react-icons/fi'
+import { HiOutlineDocumentReport } from 'react-icons/hi'
 import { IconType } from 'react-icons'
 import { ReactText } from 'react'
 import {
@@ -61,6 +62,7 @@ const LinkItems: Array<LinkItemProps> = [
    { name: 'Order', icon: FiTrendingUp, to: '/admin/order' },
    { name: 'Product', icon: FiCompass, to: '/admin/product' },
    { name: 'Category', icon: FiStar, to: '/admin/category' },
+   { name: 'Report', icon: HiOutlineDocumentReport, to: '/admin/report' },
    { name: 'Settings', icon: FiSettings, to: '/admin/Settings' },
 ]
 

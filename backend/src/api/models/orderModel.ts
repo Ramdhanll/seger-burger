@@ -15,6 +15,8 @@ export interface IOrderModel extends Document {
    }[]
    total: number
    status: 'WAITING' | 'COOKED' | 'DELIVERED' | 'COMPLETED'
+   cash?: number
+   change?: number
 }
 
 const OrderSchema = new Schema<IOrderModel>(
@@ -36,6 +38,12 @@ const OrderSchema = new Schema<IOrderModel>(
          type: String,
          enum: ['WAITING', 'COOKED', 'DELIVERED', 'COMPLETED'],
          default: 'WAITING',
+      },
+      cash: {
+         type: Number,
+      },
+      change: {
+         type: Number,
       },
    },
    {

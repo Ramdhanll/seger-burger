@@ -32,17 +32,25 @@ export const getOrders = async (req: Request, res: Response) => {
    const page = Number(req.query.page) || 1
    const order = req.query.order || ''
    const _id = req.query.id || ''
+   const status: string = (req.query.status as string) || ''
 
    const _idFilter = _id ? { _id: { $regex: _id, $options: 'i' } } : {}
    const orderFilter = order ? { order: { $regex: order, $options: 'i' } } : {}
+   const statusFilter = status.split(' ').map((status) => {
+      return {
+         status: { $regex: status, $options: 'i' },
+      }
+   })
 
    try {
       const count = await Orders.countDocuments({
          ..._idFilter,
+         $or: statusFilter,
       })
 
       const orders = await Orders.find({
          ..._idFilter,
+         $or: statusFilter,
       })
          .populate({ path: 'orders', populate: { path: 'lists.product' } })
          .sort('-createdAt')
@@ -225,6 +233,45 @@ export const orderDelivered = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Order not found' })
    } catch (error) {
       logging.error(error)
+      return res.status(500).json({ error })
+   }
+}
+
+export const orderPayment = async (req: Request, res: Response) => {
+   const errors = validationResult(req)
+   if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() })
+   }
+
+   const _id = req.params.id
+   const cash = Number(req.body.cash)
+
+   try {
+      const order = await Orders.findById(_id)
+      if (!order) return res.status(404).json({ message: 'Order not found' })
+
+      order.status = 'COMPLETED'
+      order.cash = cash
+      order.change = cash - order.total
+
+      const updatedOrder = await order.save()
+
+      return res
+         .status(200)
+         .json({ order: updatedOrder, message: 'Payment successfully' })
+   } catch (error) {
+      return res.status(500).json({ error })
+   }
+}
+
+export const getReport = async (req: Request, res: Response) => {
+   try {
+      const orders = await Orders.find({ status: 'COMPLETED' })
+
+      const totalPrice = orders.reduce((prev, curr) => prev + curr.total, 0)
+
+      return res.status(200).json({ totalPrice, totalOrders: orders.length })
+   } catch (error) {
       return res.status(500).json({ error })
    }
 }

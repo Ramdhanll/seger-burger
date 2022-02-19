@@ -12,11 +12,13 @@ import IOrder from '../../interfaces/IOrder'
 
 interface IModalBodyPayment {
    order: IOrder
+   handlePayment: (e: number) => void
 }
 
-const ModalBodyPayment: FC<IModalBodyPayment> = ({ order }) => {
+const ModalBodyPayment: FC<IModalBodyPayment> = ({ order, handlePayment }) => {
    const [lists, setLists] = useState([])
    const [change, setChange] = useState<number>(-order.total)
+   const [cash, setCash] = useState<number>(0)
 
    useEffect(() => {
       let tempLists: any = []
@@ -50,6 +52,7 @@ const ModalBodyPayment: FC<IModalBodyPayment> = ({ order }) => {
 
    const handleCash = (e: number) => {
       if (isNaN(e)) {
+         setCash(e)
          setChange(-order.total)
       } else {
          const change = e - order.total
@@ -160,6 +163,7 @@ const ModalBodyPayment: FC<IModalBodyPayment> = ({ order }) => {
                variant='solid'
                colorScheme='yellow'
                w='full'
+               onClick={() => handlePayment(cash)}
             >
                Pay
             </Button>

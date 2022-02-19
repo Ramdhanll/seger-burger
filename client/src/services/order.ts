@@ -81,6 +81,17 @@ const OrderDelivered = async (orderId: any, listOrderId: any) => {
    }
 }
 
+const OrderPayment = async (orderId: any, cash: number) => {
+   try {
+      const { data } = await axios.put(`/api/orders/${orderId}/payment`, {
+         cash,
+      })
+      return data
+   } catch (error) {
+      throw error
+   }
+}
+
 const OrderService = {
    Delete,
    Create,
@@ -88,6 +99,7 @@ const OrderService = {
    isExist,
    order,
    OrderDelivered,
+   OrderPayment,
 }
 
 export default OrderService

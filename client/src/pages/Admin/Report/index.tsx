@@ -9,7 +9,6 @@ import {
    Th,
    Thead,
    Tr,
-   useToast,
    HStack,
    useDisclosure,
    Modal,
@@ -19,81 +18,34 @@ import {
    ModalCloseButton,
    ModalBody,
    ModalFooter,
-   Link,
    VStack,
    Image,
 } from '@chakra-ui/react'
-import React, { FC, useRef, useState } from 'react'
+import React, { FC, useState } from 'react'
 import Heading from '../../../components/Admin/Heading'
 import Pagination from '../../../components/Pagination'
 import Search from '../../../components/Search'
 import IPage from '../../../interfaces/IPage'
-import useSWR, { mutate } from 'swr'
-import { MdDelete, MdPrint } from 'react-icons/md'
-import { IoMdBarcode, IoMdEye } from 'react-icons/io'
-import { FaTelegramPlane } from 'react-icons/fa'
-import { FcMoneyTransfer } from 'react-icons/fc'
+import useSWR from 'swr'
+import { IoMdEye } from 'react-icons/io'
 import TableDateNotFound from '../../../components/Table/TableDataNotFound'
 import TableLoading from '../../../components/Table/TableLoading'
 import StatusOrder from '../../../components/StatusOrder'
-import OrderService from '../../../services/order'
-import AlertDialogDelete from '../../../components/AlertDialogDelete'
 import IOrder, { INITIAL_ORDER } from '../../../interfaces/IOrder'
-import QRCode from 'react-qr-code'
-import PrintBarcode from '../../../components/PrintBarcode'
-import { useReactToPrint } from 'react-to-print'
-import PrintMenu from '../../../components/PrintMenu'
-import ModalBodyPayment from '../../../components/ModalBodyPayment'
 
-const Order: FC<IPage> = () => {
-   const toast = useToast()
-
+const Report: FC<IPage> = () => {
    const [orderSelected, setOrderSelected] = useState<IOrder>(INITIAL_ORDER)
    const [page, setPage] = useState<number>(1)
    const [searchValue, setSearchValue] = useState<string>('')
-   const [btnNewOrderIsLoading, setBtnNewOrderIsLoading] = useState(false)
-   const barcodeRef = useRef(null)
-   const [menuSelected, setMenuSelected] = useState({})
-   const menuRef = useRef(null)
 
    const { data: dataOrders, error: errorOrders } = useSWR(
-      `/api/orders?page=${page}&id=${searchValue}&status=waiting cooked delivered`
+      `/api/orders?page=${page}&id=${searchValue}&status=completed`
    )
 
-   console.log('DATA', dataOrders)
+   const { data: dataReport } = useSWR(`/api/orders/report`)
 
    const handlePagination = (i: number) => {
       setPage(i)
-   }
-
-   // Section Create
-   const handleNewOrder = async () => {
-      setBtnNewOrderIsLoading(true)
-      try {
-         await OrderService.Create()
-         setBtnNewOrderIsLoading(false)
-
-         toast({
-            title: 'Success',
-            description: 'Order created successfully',
-            status: 'success',
-            duration: 5000,
-            isClosable: true,
-            position: 'top-right',
-         })
-         mutate(`/api/orders?page=${page}&id=${searchValue}`)
-      } catch (error) {
-         setBtnNewOrderIsLoading(false)
-
-         toast({
-            title: 'Failed',
-            description: 'Order failed',
-            status: 'error',
-            duration: 5000,
-            isClosable: true,
-            position: 'top-right',
-         })
-      }
    }
 
    // Section Detail
@@ -108,67 +60,10 @@ const Order: FC<IPage> = () => {
       onOpenDetail()
    }
 
-   // Section Barcode
-   const {
-      isOpen: isOpenBarcode,
-      onOpen: onOpenBarcode,
-      onClose: onCloseBarcode,
-   } = useDisclosure()
-
-   const handleOpenBarcode = (order: IOrder) => {
-      setOrderSelected(order)
-      onOpenBarcode()
-   }
-
-   // Section Delete
-   const {
-      isOpen: isOpenAlertDelete,
-      onOpen: onOpenAlertDelete,
-      onClose: onCloseAlertDelete,
-   } = useDisclosure()
-
-   const [isLoadingAlertDelete, setIsLoadingAlertDelete] =
-      useState<boolean>(false)
-
-   const handleOpenAlertDelete = (order: IOrder) => {
-      setOrderSelected(order)
-      onOpenAlertDelete()
-   }
-
-   const handleConfirmDelete = async () => {
-      setIsLoadingAlertDelete(true)
-      try {
-         await OrderService.Delete(orderSelected?._id)
-         mutate(`/api/orders?page=${page}&id=${searchValue}`)
-         setIsLoadingAlertDelete(false)
-         onCloseAlertDelete()
-      } catch (error) {
-         setIsLoadingAlertDelete(false)
-         toast({
-            title: 'Failed',
-            description: 'Failed delete product',
-            status: 'error',
-            duration: 3000,
-            isClosable: true,
-            position: 'top-right',
-         })
-      }
-   }
-
-   const handleCloseAlertDelete = () => {
-      onCloseAlertDelete()
-   }
-
    const cleanForm = () => {
       setOrderSelected(INITIAL_ORDER)
       console.log('SELECTED ORDER', orderSelected)
    }
-
-   // Print barcode
-   const handlePrintBarcode = useReactToPrint({
-      content: () => barcodeRef.current,
-      pageStyle: pageStyle,
-   })
 
    const renderTimeOrder = (order: any) => {
       const time = new Date(order)
@@ -180,121 +75,10 @@ const Order: FC<IPage> = () => {
       return `${hour} : ${minute}`
    }
 
-   // print menu
-   const submitPrintMenu = (orders: any) => {
-      setMenuSelected(orders)
-
-      setTimeout(() => {
-         handlePrintMenu()
-      }, 1000)
-   }
-
-   console.log('dataOrders', dataOrders)
-   console.log('selectedOrder', orderSelected)
-
-   const handlePrintMenu = useReactToPrint({
-      content: () => menuRef.current,
-      pageStyle: pageStyle,
-   })
-
-   const handleOrderDelivered = async ({
-      order_id,
-      order_list_id,
-   }: {
-      order_id: any
-      order_list_id: string
-   }) => {
-      try {
-         const { order } = await OrderService.OrderDelivered(
-            order_id,
-            order_list_id
-         )
-
-         setOrderSelected(order)
-
-         mutate(`/api/orders?page=${page}&id=${searchValue}`)
-
-         // const indexOrder = dataOrders.orders.findIndex(
-         //    (order: any) => order._id === orderSelected._id
-         // )
-
-         // setOrderSelected(dataOrders[indexOrder])
-
-         toast({
-            title: 'Success',
-            description: 'Order delivered successfully',
-            status: 'success',
-            duration: 5000,
-            isClosable: true,
-            position: 'top-right',
-         })
-      } catch (error) {
-         setBtnNewOrderIsLoading(false)
-
-         toast({
-            title: 'Failed',
-            description: 'Order delivered failed',
-            status: 'error',
-            duration: 5000,
-            isClosable: true,
-            position: 'top-right',
-         })
-      }
-   }
-
-   // Section payment
-   const {
-      isOpen: isOpenPayment,
-      onOpen: onOpenPayment,
-      onClose: onClosePayment,
-   } = useDisclosure()
-
-   const handleOpenPayment = (order: IOrder) => {
-      setOrderSelected(order)
-      onOpenPayment()
-   }
-
-   const handlePayment = async (cash: number) => {
-      try {
-         await OrderService.OrderPayment(orderSelected._id, cash)
-         toast({
-            title: 'Success',
-            description: 'Payment successfully',
-            status: 'success',
-            duration: 5000,
-            isClosable: true,
-            position: 'top-right',
-         })
-         mutate(`/api/orders?page=${page}&id=${searchValue}`)
-         onClosePayment()
-         cleanForm()
-      } catch (error: any) {
-         toast({
-            title: 'Failed',
-            description: error?.response?.data?.errors || 'Payment failed',
-            status: 'error',
-            duration: 3000,
-            isClosable: true,
-            position: 'top-right',
-         })
-      }
-   }
-
    return (
       <Box textAlign='left' py={3} bg='white' alignItems='center'>
          <Flex justifyContent='space-between'>
-            <Heading>ORDER</Heading>
-            <Button
-               variant='solid'
-               bg='yellow.400'
-               color='gray.50'
-               size='sm'
-               onClick={handleNewOrder}
-               _focus={{ outline: 'none' }}
-               isLoading={btnNewOrderIsLoading}
-            >
-               <Text>New Order</Text>
-            </Button>
+            <Heading>Report</Heading>
          </Flex>
          <Box mt='20px'>
             <Search
@@ -356,27 +140,6 @@ const Order: FC<IPage> = () => {
                                  >
                                     <IoMdEye size='16px' />
                                  </Button>
-                                 <Button
-                                    variant='outline'
-                                    colorScheme='cyan'
-                                    onClick={() => handleOpenBarcode(order)}
-                                 >
-                                    <IoMdBarcode size='16px' />
-                                 </Button>
-                                 <Button
-                                    variant='solid'
-                                    colorScheme='teal'
-                                    onClick={() => handleOpenPayment(order)}
-                                 >
-                                    <FcMoneyTransfer size='16px' />
-                                 </Button>
-                                 <Button
-                                    variant='outline'
-                                    colorScheme='red'
-                                    onClick={() => handleOpenAlertDelete(order)}
-                                 >
-                                    <MdDelete size='16px' />
-                                 </Button>
                               </HStack>
                            </Td>
                         </Tr>
@@ -404,7 +167,7 @@ const Order: FC<IPage> = () => {
             isOpen={isOpenDetail}
             onClose={onCloseDetail}
             onOverlayClick={cleanForm}
-            size='lg'
+            size='md'
          >
             <ModalOverlay />
             <ModalContent>
@@ -454,14 +217,6 @@ const Order: FC<IPage> = () => {
                                           minute: '2-digit',
                                        })}
                                     </Text>
-                                    <Button
-                                       size='xs'
-                                       variant='solid'
-                                       colorScheme='green'
-                                       onClick={() => submitPrintMenu(order)}
-                                    >
-                                       <MdPrint size='16px' />
-                                    </Button>
                                  </Flex>
 
                                  {order.lists.map((order: any, i: number) => (
@@ -526,21 +281,6 @@ const Order: FC<IPage> = () => {
                                        </Text>
 
                                        <StatusOrder status={order.status} />
-                                       {order.status !== 'DELIVERED' && (
-                                          <Button
-                                             size='xs'
-                                             variant='solid'
-                                             colorScheme='telegram'
-                                             onClick={() =>
-                                                handleOrderDelivered({
-                                                   order_id: orderSelected._id,
-                                                   order_list_id: order._id,
-                                                })
-                                             }
-                                          >
-                                             <FaTelegramPlane size='16px' />
-                                          </Button>
-                                       )}
                                     </Box>
                                  ))}
                               </Box>
@@ -578,101 +318,8 @@ const Order: FC<IPage> = () => {
                <ModalFooter></ModalFooter>
             </ModalContent>
          </Modal>
-
-         {/* Modal Barcode */}
-         <Modal
-            isOpen={isOpenBarcode}
-            onClose={onCloseBarcode}
-            onOverlayClick={cleanForm}
-         >
-            <ModalOverlay />
-            <ModalContent>
-               <ModalHeader>Order ID: {orderSelected._id}</ModalHeader>
-               <ModalCloseButton _focus={{ outline: 'none' }} />
-               <ModalBody>
-                  <Box
-                     d='flex'
-                     alignItems='center'
-                     justifyContent='center'
-                     flexDirection='column'
-                     gridGap={3}
-                  >
-                     <QRCode value={orderSelected.link} />
-                     <Link href={orderSelected.link} isExternal>
-                        {orderSelected.link}
-                     </Link>
-
-                     <Button
-                        variant='solid'
-                        colorScheme='yellow'
-                        d='block'
-                        onClick={handlePrintBarcode}
-                     >
-                        Print Order
-                     </Button>
-                  </Box>
-               </ModalBody>
-               <ModalFooter></ModalFooter>
-            </ModalContent>
-         </Modal>
-
-         {/* Modal Payment */}
-         <Modal
-            isOpen={isOpenPayment}
-            onClose={onClosePayment}
-            onOverlayClick={cleanForm}
-            size='sm'
-         >
-            <ModalOverlay />
-            <ModalContent>
-               <ModalHeader>
-                  <Text color='gray.500' fontSize='lg'>
-                     Payment
-                  </Text>
-                  <Text color='gray.400' fontSize='md' fontWeight='400'>
-                     Order ID: {orderSelected._id}
-                  </Text>
-               </ModalHeader>
-               <ModalCloseButton _focus={{ outline: 'none' }} />
-               <ModalBody>
-                  <ModalBodyPayment
-                     order={orderSelected}
-                     handlePayment={handlePayment}
-                  />
-               </ModalBody>
-            </ModalContent>
-         </Modal>
-
-         {/* Alert delete order */}
-         <AlertDialogDelete
-            header='Delete Order'
-            body='Are you sure you want to delete?'
-            isOpen={isOpenAlertDelete}
-            onClose={onCloseAlertDelete}
-            isLoading={isLoadingAlertDelete}
-            handleConfirm={handleConfirmDelete}
-            handleCloseAlert={handleCloseAlertDelete}
-         />
-
-         <Box display='none'>
-            <Box ref={barcodeRef}>
-               <PrintBarcode order={orderSelected} />
-            </Box>
-         </Box>
-
-         <Box display='none'>
-            <Box ref={menuRef}>
-               <PrintMenu orders={menuSelected} />
-            </Box>
-         </Box>
       </Box>
    )
 }
 
-const pageStyle = `
-   @page {
-      size: 90mm 160mm;
-   }
-`
-
-export default Order
+export default Report
